@@ -1142,14 +1142,14 @@ const DAYS_CONFIG = [
 ];
 
 const GAMES = {
-  kamera: { emoji: '📸', word: 'KAMERA', letterIndex: 1, letter: 'A', balePos: 2 },
-  condor: { emoji: '🦅', word: 'CONDOR', letterIndex: 5, letter: 'R', balePos: 6 },
-  koffer: { emoji: '🧳', word: 'KOFFER', letterIndex: 4, letter: 'E', balePos: 4 },
-  pinien: { emoji: '🌲', word: 'PINIEN', letterIndex: 5, letter: 'N', balePos: 8 },
-  felsen: { emoji: '🪨', word: 'FELSEN', letterIndex: 4, letter: 'E', balePos: 7 },
-  krabbe: { emoji: '🦀', word: 'KRABBE', letterIndex: 3, letter: 'B', balePos: 1 },
-  salz:   { emoji: '🧂', word: 'SALZ',   letterIndex: 1, letter: 'A', balePos: 5 },
-  insel:  { emoji: '🏝️', word: 'INSEL',  letterIndex: 4, letter: 'L', balePos: 3 }
+  kamera: { num: 1, emoji: '📸', word: 'KAMERA', letterIndex: 1, letter: 'A', balePos: 2 },
+  condor: { num: 2, emoji: '🦅', word: 'CONDOR', letterIndex: 5, letter: 'R', balePos: 6 },
+  koffer: { num: 3, emoji: '🧳', word: 'KOFFER', letterIndex: 4, letter: 'E', balePos: 4 },
+  pinien: { num: 4, emoji: '🌲', word: 'PINIEN', letterIndex: 5, letter: 'N', balePos: 8 },
+  felsen: { num: 5, emoji: '🪨', word: 'FELSEN', letterIndex: 4, letter: 'E', balePos: 7 },
+  krabbe: { num: 6, emoji: '🦀', word: 'KRABBE', letterIndex: 3, letter: 'B', balePos: 1 },
+  salz:   { num: 7, emoji: '🧂', word: 'SALZ',   letterIndex: 1, letter: 'A', balePos: 5 },
+  insel:  { num: 8, emoji: '🏝️', word: 'INSEL',  letterIndex: 4, letter: 'L', balePos: 3 }
 };
 
 // Reihenfolge der Emojis in der Sammelleiste (Spielreihenfolge Di→Fr)
@@ -1394,7 +1394,7 @@ function openGamePoem(gameId) {
   const game  = GAMES[gameId];
   const lines = POEMS[gameId];
 
-  document.getElementById('poem-game-title').textContent = `${game.emoji}  ${game.word}`;
+  document.getElementById('poem-game-title').textContent = `${game.emoji}  Rätsel ${game.num} — Was bin ich?`;
   document.getElementById('play-btn-wrap').style.display = 'none';
 
   const poemEl = document.getElementById('poem-text');
@@ -1546,7 +1546,7 @@ function launchKamera() {
   function render() {
     const r = rounds[round];
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">📸 KAMERA</div>
+      <div class="game-title">📸 Rätsel 1</div>
       <div class="round-indicator">Runde ${round+1} von ${rounds.length}</div>
       <div class="progress-bar-wrap"><div class="progress-bar" style="width:${(round/rounds.length)*100}%"></div></div>
       <div class="card text-center" style="padding:20px 16px;">
@@ -1606,7 +1606,7 @@ function launchCondor() {
 
   function buildUI() {
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">🦅 CONDOR</div>
+      <div class="game-title">🦅 Rätsel 2</div>
       <div class="round-indicator" id="condor-round">Runde ${currentRound+1} von ${speeds.length}</div>
       <div class="progress-bar-wrap">
         <div class="progress-bar" id="condor-prog" style="width:${(currentRound/speeds.length)*100}%"></div>
@@ -1727,7 +1727,7 @@ function launchKoffer() {
 
   function render() {
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">🧳 KOFFER</div>
+      <div class="game-title">🧳 Rätsel 3</div>
       <div class="pack-suitcase">
         <div class="pack-suitcase-icon">🧳</div>
         <div class="pack-counter" id="pack-count">Eingepackt: 0 / ${NEEDED}</div>
@@ -1792,7 +1792,7 @@ function launchPinien() {
 
   function render() {
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">🌲 PINIEN</div>
+      <div class="game-title">🌲 Rätsel 4</div>
       <p class="text-center dim italic mb-8" style="font-size:13px;">Finde alle 6 Paare!</p>
       <div class="progress-bar-wrap">
         <div class="progress-bar" id="mem-prog" style="width:0%"></div>
@@ -1890,7 +1890,7 @@ function launchFelsen() {
   function render() {
     const q = questions[qi];
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">🪨 FELSEN</div>
+      <div class="game-title">🪨 Rätsel 5</div>
       <div class="round-indicator">Frage ${qi+1} von ${questions.length}</div>
       <div class="progress-bar-wrap">
         <div class="progress-bar" style="width:${(qi/questions.length)*100}%"></div>
@@ -1957,7 +1957,7 @@ function launchKrabbe() {
 
   function render() {
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">🦀 KRABBE</div>
+      <div class="game-title">🦀 Rätsel 6</div>
       <div id="crab-timer">⏱ ${TIME_SEC}s</div>
       <div id="crab-score-display">Gefangen: 0 / ${NEEDED}</div>
       <div id="crab-arena"></div>
@@ -2046,7 +2046,7 @@ function launchKrabbe() {
       if (failures >= MAX_FAIL) {
         html += `<button class="btn btn-secondary mt-16" onclick="onGameWon('krabbe')">Überspringen ➜</button>`;
       }
-      content.innerHTML = `<div class="game-title">🦀 KRABBE</div>${html}`;
+      content.innerHTML = `<div class="game-title">🦀 Rätsel 6</div>${html}`;
     }
   }
 
@@ -2123,7 +2123,7 @@ function launchSalz() {
     }
 
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">🧂 SALZ</div>
+      <div class="game-title">🧂 Rätsel 7</div>
       <p class="text-center dim italic" style="font-size:13px; margin-bottom:12px;">Tippe auf eine Lücke und fülle sie aus!</p>
       <div class="card">
         <div class="poem-with-blanks" id="salz-poem">${poemHTML}</div>
@@ -2193,7 +2193,7 @@ function launchInsel() {
     ).join('');
 
     document.getElementById('game-content').innerHTML = `
-      <div class="game-title">🏝️ INSEL</div>
+      <div class="game-title">🏝️ Rätsel 8</div>
       <p class="text-center dim italic" style="font-size:13px; margin-bottom:12px;">
         Tippe die Buchstaben in der richtigen Reihenfolge!
       </p>
