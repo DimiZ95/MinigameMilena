@@ -2223,9 +2223,36 @@ function _gameStub(id) {
 }
 
 // ─── SATURDAY SPECIAL (Stub — folgt in Commit 6) ──────────────────
+// ═══════════════════════════════════════════════════════════════════
+// COMMIT 6 — SATURDAY SPECIAL: IBIZA-ENTHÜLLUNG
+// ═══════════════════════════════════════════════════════════════════
+
+// Decoder-Mapping: Emoji → Buchstabe für BALEAREN
+// Sammelreihenfolge: 📸🦅🧳🌲🪨🦀🧂🏝️ → A R E N E B A L
+// Nach Sortierung per balePos ergibt sich: B A L E A R E N
+const DECODER = [
+  { emoji: '📸', letter: 'A' },
+  { emoji: '🦅', letter: 'R' },
+  { emoji: '🧳', letter: 'E' },
+  { emoji: '🌲', letter: 'N' },
+  { emoji: '🪨', letter: 'E' },
+  { emoji: '🦀', letter: 'B' },
+  { emoji: '🧂', letter: 'A' },
+  { emoji: '🏝️', letter: 'L' }
+];
+
+const ACROSTIC = [
+  { letter: 'I', rest: 'm Mittelmeer, wo Pinien am Ufer stehn,' },
+  { letter: 'B', rest: 'is in die Nacht die warmen Lichter wehn,' },
+  { letter: 'I', rest: 'hr alter Name: Insel, wo Pinien gedeihn,' },
+  { letter: 'Z', rest: 'wei Herzen fliegen hin — im Sonnenschein,' },
+  { letter: 'A', rest: 'm Horizont wartet euer Abenteuer!' }
+];
+
 function startSaturdaySpecial() {
   showScreen('saturday-screen');
   buildStars();
+  satBuildPhase1();
   satShowPhase(1);
 }
 
@@ -2251,10 +2278,138 @@ function satShowPhase(n) {
   document.querySelectorAll('.saturday-phase').forEach(el => el.classList.remove('active'));
   const ph = document.getElementById(`sat-phase-${n}`);
   if (ph) ph.classList.add('active');
+  window.scrollTo(0, 0);
 }
 
+// Phase 1: Alle Emojis zeigen
+function satBuildPhase1() {
+  const row = document.getElementById('sat-emojis-row');
+  if (!row) return;
+  row.innerHTML = '';
+  DECODER.forEach((d, i) => {
+    const item = document.createElement('div');
+    item.className = 'reveal-emoji-item';
+    item.style.animationDelay = (i * 0.15) + 's';
+    item.innerHTML = `<span class="re-emoji">${d.emoji}</span><span class="re-letter"></span>`;
+    row.appendChild(item);
+  });
+}
+
+// Phase 2: Decoder-Animation
 function satNextPhase(n) {
-  satShowPhase(n);
+  if (n === 2) {
+    satShowPhase(2);
+    satRunDecoder();
+  } else if (n === 3) {
+    satShowPhase(3);
+    satRunShuffle();
+  } else if (n === 4) {
+    satShowPhase(4);
+    satRunAcrostic();
+  } else if (n === 5) {
+    satShowPhase(5);
+    launchConfetti();
+    setTimeout(launchConfetti, 800);
+    // Mark Saturday as complete
+    const state = loadState();
+    if (!state.completedGames.includes('special')) {
+      state.completedGames.push('special');
+      saveState(state);
+    }
+  } else if (n === 6) {
+    satShowPhase(6);
+    launchConfetti();
+  } else {
+    satShowPhase(n);
+  }
+}
+
+function satRunDecoder() {
+  const row = document.getElementById('sat-decoder-row');
+  if (!row) return;
+  row.innerHTML = '';
+  DECODER.forEach((d, i) => {
+    const item = document.createElement('div');
+    item.className = 'reveal-emoji-item';
+    item.style.animationDelay = (i * 0.1) + 's';
+    item.innerHTML = `<span class="re-emoji">${d.emoji}</span><span class="re-letter" id="dec-letter-${i}"></span>`;
+    row.appendChild(item);
+  });
+
+  // Buchstaben nacheinander einblenden
+  DECODER.forEach((d, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(`dec-letter-${i}`);
+      if (el) {
+        el.textContent = d.letter;
+        el.style.animation = 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both';
+      }
+      if (i === DECODER.length - 1) {
+        setTimeout(() => {
+          const btn = document.getElementById('sat-p2-btn');
+          if (btn) btn.style.display = 'block';
+        }, 600);
+      }
+    }, 600 + i * 800);
+  });
+}
+
+function satRunShuffle() {
+  // Gesammelte Buchstaben in Spielreihenfolge: A R E N E B A L
+  const collectedLetters = DECODER.map(d => d.letter); // A R E N E B A L
+  const display = document.getElementById('sat-shuffle-display');
+  if (!display) return;
+
+  // Zeige erst die ungeordneten Buchstaben
+  display.textContent = collectedLetters.join(' · ');
+
+  // Dann shuffle-Animation (mehrfach mischen)
+  let shuffleCount = 0;
+  const maxShuffles = 6;
+  const shuffleInt = setInterval(() => {
+    const arr = [...collectedLetters];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    display.textContent = arr.join(' · ');
+    shuffleCount++;
+    if (shuffleCount >= maxShuffles) {
+      clearInterval(shuffleInt);
+      // Finale Reihenfolge: B A L E A R E N
+      setTimeout(() => {
+        display.textContent = 'B · A · L · E · A · R · E · N';
+        display.style.color = 'var(--gold)';
+        setTimeout(() => {
+          const wrap = document.getElementById('sat-balearen-wrap');
+          if (wrap) wrap.style.display = 'block';
+          launchConfetti();
+        }, 800);
+      }, 400);
+    }
+  }, 350);
+}
+
+function satRunAcrostic() {
+  const container = document.getElementById('sat-acrostic');
+  if (!container) return;
+  container.innerHTML = '';
+  ACROSTIC.forEach((line, i) => {
+    const span = document.createElement('span');
+    span.className = 'acrostic-line';
+    span.innerHTML = `<span class="acrostic-letter">${line.letter}</span>${line.rest}`;
+    container.appendChild(span);
+
+    setTimeout(() => {
+      span.classList.add('visible');
+      if (i === ACROSTIC.length - 1) {
+        setTimeout(() => {
+          const btn = document.getElementById('sat-p4-btn');
+          if (btn) btn.style.display = 'block';
+        }, 800);
+      }
+    }, 400 + i * 2000);
+  });
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────
