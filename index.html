@@ -1666,8 +1666,172 @@ function launchCondor() {
 }
 
 // ─── PLATZHALTER für Mi/Do/Fr Spiele (folgen in Commit 3–5) ──────
-function launchKoffer() { _gameStub('koffer'); }
-function launchPinien() { _gameStub('pinien'); }
+// ═══════════════════════════════════════════════════════════════════
+// COMMIT 3 — MITTWOCHS-SPIELE: KOFFER + PINIEN
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── SPIEL 3: KOFFER — Pack-Spiel ────────────────────────────────
+function launchKoffer() {
+  const items = [
+    { emoji: '👙', correct: true  },
+    { emoji: '🧴', correct: true  },
+    { emoji: '🕶️', correct: true  },
+    { emoji: '📘', correct: true  },
+    { emoji: '🩴', correct: true  },
+    { emoji: '🏖️', correct: true  },
+    { emoji: '⛷️', correct: false },
+    { emoji: '🧤', correct: false },
+    { emoji: '☂️',  correct: false },
+    { emoji: '🧥', correct: false },
+    { emoji: '🎿', correct: false },
+    { emoji: '🌨️', correct: false }
+  ];
+  // Shuffle
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+
+  let packed = 0;
+  const NEEDED = 6;
+
+  function render() {
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">🧳 KOFFER</div>
+      <div class="pack-suitcase">
+        <div class="pack-suitcase-icon">🧳</div>
+        <div class="pack-counter" id="pack-count">Eingepackt: 0 / ${NEEDED}</div>
+      </div>
+      <p class="text-center dim italic mb-8" style="font-size:13px;">
+        Wähle die 6 richtigen Urlaubssachen!
+      </p>
+      <div class="pack-grid" id="pack-grid"></div>
+      <div class="feedback-msg" id="pack-feedback"></div>
+    `;
+    const grid = document.getElementById('pack-grid');
+    items.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'pack-item';
+      div.id = `pack-item-${i}`;
+      div.textContent = item.emoji;
+      div.onclick = () => packClick(i);
+      div.addEventListener('touchstart', () => {}, { passive: true });
+      grid.appendChild(div);
+    });
+  }
+
+  window.packClick = function(i) {
+    const item = items[i];
+    const el = document.getElementById(`pack-item-${i}`);
+    if (!el || el.classList.contains('packed')) return;
+    if (item.correct) {
+      el.classList.add('packed');
+      packed++;
+      document.getElementById('pack-count').textContent = `Eingepackt: ${packed} / ${NEEDED}`;
+      if (packed >= NEEDED) {
+        setTimeout(() => onGameWon('koffer'), 600);
+      }
+    } else {
+      el.classList.add('wrong-item');
+      const fb = document.getElementById('pack-feedback');
+      fb.textContent = 'Das brauchst du im Urlaub nicht! ❌';
+      fb.className = 'feedback-msg bad';
+      setTimeout(() => {
+        el.classList.remove('wrong-item');
+        if (fb) fb.textContent = '';
+      }, 700);
+    }
+  };
+
+  render();
+}
+
+// ─── SPIEL 4: PINIEN — Memory ────────────────────────────────────
+function launchPinien() {
+  const symbols = ['🌲','🌊','☀️','🐚','🌺','🦋'];
+  let cards = [...symbols, ...symbols];
+  // Shuffle
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+
+  let flipped = [];
+  let matched = 0;
+  let locked  = false;
+
+  function render() {
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">🌲 PINIEN</div>
+      <p class="text-center dim italic mb-8" style="font-size:13px;">Finde alle 6 Paare!</p>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="mem-prog" style="width:0%"></div>
+      </div>
+      <div class="memory-grid" id="memory-grid"></div>
+      <div class="feedback-msg" id="mem-feedback"></div>
+    `;
+    const grid = document.getElementById('memory-grid');
+    cards.forEach((sym, i) => {
+      const card = document.createElement('div');
+      card.className = 'memory-card';
+      card.id = `mc-${i}`;
+      card.dataset.sym = sym;
+      card.innerHTML = `
+        <div class="memory-card-front">❓</div>
+        <div class="memory-card-back">${sym}</div>
+      `;
+      card.onclick = () => memoryFlip(i);
+      card.addEventListener('touchstart', () => {}, { passive: true });
+      grid.appendChild(card);
+    });
+  }
+
+  window.memoryFlip = function(i) {
+    if (locked) return;
+    const card = document.getElementById(`mc-${i}`);
+    if (!card || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+    card.classList.add('flipped');
+    flipped.push(i);
+
+    if (flipped.length === 2) {
+      locked = true;
+      const [a, b] = flipped;
+      const ca = document.getElementById(`mc-${a}`);
+      const cb = document.getElementById(`mc-${b}`);
+      if (ca.dataset.sym === cb.dataset.sym) {
+        // Match!
+        setTimeout(() => {
+          ca.classList.add('matched');
+          cb.classList.add('matched');
+          matched++;
+          document.getElementById('mem-prog').style.width = `${(matched/symbols.length)*100}%`;
+          const fb = document.getElementById('mem-feedback');
+          if (fb) { fb.textContent = 'Paar gefunden! ✓'; fb.className = 'feedback-msg good'; }
+          flipped = [];
+          locked  = false;
+          if (matched === symbols.length) {
+            setTimeout(() => onGameWon('pinien'), 600);
+          } else {
+            setTimeout(() => { if (fb) fb.textContent = ''; }, 800);
+          }
+        }, 400);
+      } else {
+        // Kein Match
+        setTimeout(() => {
+          ca.classList.remove('flipped');
+          cb.classList.remove('flipped');
+          flipped = [];
+          locked  = false;
+          const fb = document.getElementById('mem-feedback');
+          if (fb) { fb.textContent = ''; }
+        }, 1500);
+      }
+    }
+  };
+
+  render();
+}
 function launchFelsen() { _gameStub('felsen'); }
 function launchKrabbe() { _gameStub('krabbe'); }
 function launchSalz()   { _gameStub('salz'); }
