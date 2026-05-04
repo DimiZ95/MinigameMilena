@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🌴 Dein Abenteuer wartet</title>
+<style>
+/* === RESET & BASE === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-top:    #0c1445;
+  --bg-mid:    #4a1942;
+  --bg-bot:    #c0392b;
+  --gold:      #f59e0b;
+  --gold-glow: rgba(245,158,11,0.4);
+  --success:   #10b981;
+  --error:     #ef4444;
+  --card-bg:   rgba(255,255,255,0.1);
+  --card-border: rgba(255,255,255,0.2);
+  --text:      #ffffff;
+  --text-dim:  rgba(255,255,255,0.7);
+}
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bot) 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* === LAYOUT WRAPPER === */
+#app {
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 0);
+  position: relative;
+  overflow: hidden;
+}
+
+/* === SCREENS === */
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  animation: slideInRight 0.3s ease-out;
+}
+.screen.active { display: block; }
+.screen.slide-back { animation: slideInLeft 0.3s ease-out; }
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* === CARD (glassmorphism) === */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* === BUTTONS === */
+.btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--gold);
+  color: #1a0a00;
+}
+.btn-secondary {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+}
+.btn-success { background: var(--success); color: white; }
+.btn-error   { background: var(--error);   color: white; }
+
+/* === COUNTDOWN === */
+#countdown-section {
+  text-align: center;
+  margin-bottom: 16px;
+}
+#countdown-label {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+#countdown-timer {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.cd-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+}
+.cd-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+.cd-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.cd-sep {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+  align-self: flex-start;
+  padding-top: 2px;
+}
+
+/* === EMOJI COLLECTION BAR === */
+#emoji-bar-section {
+  margin-bottom: 20px;
+}
+#emoji-bar-label {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+#emoji-bar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.emoji-slot {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border: 2px dashed rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.05);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.emoji-slot.filled {
+  border-style: solid;
+  border-color: var(--gold);
+  background: rgba(245,158,11,0.15);
+}
+.emoji-slot.pop {
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* === DAY CARDS GRID === */
+#day-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.day-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  will-change: transform;
+}
+.day-card:active { transform: scale(0.97); }
+.day-card.locked {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: default;
+}
+.day-card.available {
+  box-shadow: 0 0 15px var(--gold-glow), 0 0 30px var(--gold-glow);
+  border-color: var(--gold);
+}
+.day-card.completed {
+  border-color: var(--success);
+  box-shadow: 0 0 10px rgba(16,185,129,0.3);
+}
+.day-card.saturday {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(139,92,246,0.2));
+  border-color: var(--gold);
+}
+.day-card-date {
+  font-size: 13px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.day-card-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+.day-card-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.day-card-emojis {
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+.day-card-progress {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* === POEM SCREEN === */
+#poem-screen .poem-text {
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.9);
+  margin: 16px 0;
+}
+.poem-line {
+  display: block;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.poem-line.visible {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === GAME SCREEN === */
+#game-screen {
+  padding-bottom: 32px;
+}
+.game-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--gold);
+}
+
+/* === VICTORY SCREEN === */
+#victory-screen {
+  text-align: center;
+}
+.victory-word {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  margin: 20px 0;
+}
+.victory-word span { color: var(--text-dim); }
+.victory-word span.highlight {
+  color: var(--gold);
+  text-shadow: 0 0 20px var(--gold);
+  animation: letterPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+@keyframes letterPop {
+  0%   { transform: scale(0.5); }
+  60%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+.victory-emoji-big {
+  font-size: 64px;
+  display: block;
+  margin: 16px auto;
+  animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+.victory-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+/* === SILHOUETTE QUIZ === */
+.silhouette-emoji {
+  font-size: 80px;
+  display: block;
+  text-align: center;
+  filter: brightness(0) invert(0);
+  margin: 20px auto;
+  line-height: 1;
+  will-change: filter;
+  transition: filter 0.4s ease;
+}
+.silhouette-emoji.revealed { filter: brightness(1); }
+.answer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 16px 0;
+}
+.answer-btn {
+  min-height: 48px;
+  padding: 10px 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.answer-btn:active { transform: scale(0.96); }
+.answer-btn.correct { background: var(--success); border-color: var(--success); }
+.answer-btn.wrong   { background: var(--error);   border-color: var(--error); animation: wobble 0.4s; }
+
+/* === CATCH GAME (CONDOR) === */
+.bird-track {
+  position: relative;
+  height: 80px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 40px;
+  overflow: hidden;
+  margin: 20px 0;
+  border: 1px solid var(--card-border);
+}
+.golden-zone {
+  position: absolute;
+  left: 35%;
+  width: 30%;
+  top: 0;
+  bottom: 0;
+  background: rgba(245,158,11,0.25);
+  border-left: 2px solid rgba(245,158,11,0.5);
+  border-right: 2px solid rgba(245,158,11,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: rgba(245,158,11,0.8);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.flying-bird {
+  position: absolute;
+  font-size: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  will-change: left;
+  transition: left linear;
+  line-height: 1;
+}
+#tap-btn {
+  width: 100%;
+  height: 72px;
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#tap-btn.in-zone  { background: var(--success); color: white; }
+#tap-btn.out-zone { background: var(--error);   color: white; }
+
+/* === PACKING GAME (KOFFER) === */
+.pack-suitcase {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.pack-suitcase-icon { font-size: 48px; }
+.pack-counter {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+.pack-item {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  will-change: transform;
+}
+.pack-item:active { transform: scale(0.93); }
+.pack-item.packed {
+  opacity: 0.3;
+  pointer-events: none;
+  animation: flyUp 0.4s ease-in forwards;
+}
+.pack-item.wrong-item { animation: wobble 0.4s; }
+
+@keyframes flyUp {
+  to { transform: translateY(-60px) scale(0.5); opacity: 0; }
+}
+
+/* === MEMORY GAME (PINIEN) === */
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+.memory-card {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.memory-card.flipped  { transform: rotateY(180deg); }
+.memory-card.matched  { transform: rotateY(180deg); cursor: default; }
+.memory-card-front,
+.memory-card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  font-size: 28px;
+  border: 1px solid var(--card-border);
+}
+.memory-card-front {
+  background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(139,92,246,0.3));
+  font-size: 22px;
+}
+.memory-card-back {
+  background: var(--card-bg);
+  transform: rotateY(180deg);
+}
+.memory-card.matched .memory-card-back {
+  border-color: var(--success);
+  background: rgba(16,185,129,0.2);
+}
+
+/* === QUIZ GAME (FELSEN) === */
+.quiz-question {
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  margin: 16px 0 20px;
+  line-height: 1.5;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.quiz-option {
+  min-height: 52px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.quiz-option:active { transform: scale(0.98); }
+.quiz-option.correct { background: var(--success); border-color: var(--success); }
+.quiz-option.wrong   { background: var(--error);   border-color: var(--error); animation: wobble 0.4s; }
+
+/* === CATCH CRABS (KRABBE) === */
+#crab-arena {
+  position: relative;
+  height: 320px;
+  background: rgba(0,0,40,0.4);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  margin: 12px 0;
+  touch-action: none;
+}
+.crab-enemy {
+  position: absolute;
+  font-size: 32px;
+  cursor: pointer;
+  will-change: transform;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.crab-enemy.caught {
+  animation: crabPop 0.3s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes crabPop {
+  to { transform: scale(0) rotate(180deg); opacity: 0; }
+}
+#crab-timer {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 8px 0;
+}
+#crab-score-display {
+  text-align: center;
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+/* === FILL BLANKS (SALZ) === */
+.poem-with-blanks {
+  font-style: italic;
+  font-size: 16px;
+  line-height: 2.2;
+  color: rgba(255,255,255,0.9);
+  margin: 16px 0;
+}
+.blank-btn {
+  display: inline-block;
+  min-width: 90px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 2px dashed rgba(245,158,11,0.6);
+  background: rgba(245,158,11,0.1);
+  color: var(--gold);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  vertical-align: middle;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.blank-btn.filled-correct {
+  border-style: solid;
+  border-color: var(--success);
+  background: rgba(16,185,129,0.2);
+  color: white;
+  cursor: default;
+  pointer-events: none;
+}
+.blank-btn.wrong-flash { animation: flashRed 0.4s; }
+.blank-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+@keyframes flashRed {
+  0%, 100% { background: rgba(245,158,11,0.1); }
+  50%       { background: rgba(239,68,68,0.4); }
+}
+
+/* === SCRAMBLE (INSEL) === */
+.scramble-letters {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0 16px;
+}
+.scramble-letter-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid var(--card-border);
+  color: var(--text);
+  font-size: 26px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.scramble-letter-btn:active { transform: scale(0.93); }
+.scramble-letter-btn.used { opacity: 0.3; pointer-events: none; }
+.scramble-slots {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 0 0 16px;
+}
+.scramble-slot {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  border: 2px dashed rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--gold);
+  transition: border-color 0.2s;
+}
+.scramble-slot.filled { border-style: solid; border-color: var(--gold); }
+.scramble-slot.error { animation: wobble 0.4s; border-color: var(--error); }
+
+/* === WOBBLE ANIMATION === */
+@keyframes wobble {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* === SATURDAY SPECIAL === */
+#saturday-screen {
+  background: transparent;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+.star {
+  position: fixed;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: twinkle 3s infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: 0.1; transform: scale(0.8); }
+  to   { opacity: 0.9; transform: scale(1.2); }
+}
+.saturday-phase { display: none; }
+.saturday-phase.active { display: block; animation: fadeInUp 0.6s ease-out; }
+
+.reveal-emojis {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+.reveal-emoji-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+.reveal-emoji-item .re-emoji { font-size: 36px; }
+.reveal-emoji-item .re-letter {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold);
+  min-height: 28px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.balearen-text {
+  font-size: 36px;
+  font-weight: 900;
+  text-align: center;
+  color: var(--gold);
+  text-shadow: 0 0 30px var(--gold);
+  letter-spacing: 6px;
+  animation: letterPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  margin: 20px 0;
+}
+
+.acrostic-poem {
+  margin: 16px 0;
+  font-size: 15px;
+  line-height: 2;
+  font-style: italic;
+}
+.acrostic-line {
+  display: block;
+  opacity: 0;
+  color: rgba(255,255,255,0.9);
+}
+.acrostic-line.visible { animation: fadeInUp 0.5s ease-out forwards; }
+.acrostic-letter {
+  color: var(--gold);
+  font-size: 19px;
+  font-weight: 900;
+  font-style: normal;
+  text-shadow: 0 0 12px var(--gold);
+}
+
+.ibiza-reveal {
+  text-align: center;
+  font-size: 52px;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 0 40px white, 0 0 80px var(--gold);
+  letter-spacing: 8px;
+  animation: ibizaFlash 1s ease-out both;
+  margin: 20px 0;
+}
+@keyframes ibizaFlash {
+  0%   { opacity: 0; transform: scale(0.3); filter: blur(10px); }
+  60%  { opacity: 1; transform: scale(1.15); filter: blur(0); }
+  100% { transform: scale(1); }
+}
+
+.flight-card {
+  background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(12,20,69,0.6));
+  border: 1px solid var(--gold);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 16px 0;
+  animation: fadeInUp 0.6s ease-out both;
+}
+.flight-card-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.flight-card-row:last-child { border-bottom: none; }
+.flight-card-icon { font-size: 20px; min-width: 28px; }
+.flight-card-text { color: var(--text); }
+
+/* === CONFETTI === */
+.confetti-piece {
+  position: fixed;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: confettiFall linear forwards;
+  z-index: 1000;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* === MISC === */
+.section-title {
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.section-subtitle {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 20px;
+}
+.progress-bar-wrap {
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  height: 6px;
+  margin: 8px 0 16px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 8px;
+  transition: width 0.4s;
+}
+.round-indicator {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.feedback-msg {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  min-height: 24px;
+  margin: 8px 0;
+}
+.feedback-msg.good { color: var(--success); }
+.feedback-msg.bad  { color: var(--error); }
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 8px 0 16px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.text-center { text-align: center; }
+.mt-8  { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-8  { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.gold  { color: var(--gold); }
+.dim   { color: var(--text-dim); }
+.italic { font-style: italic; }
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════
+       HAUPTSCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="main-screen" class="screen active">
+    <div style="text-align:center; padding: 20px 0 12px;">
+      <div style="font-size:36px; margin-bottom:4px;">🌴</div>
+      <h1 style="font-size:20px; font-weight:800; line-height:1.3;">Dein Abenteuer wartet</h1>
+    </div>
+
+    <!-- Countdown -->
+    <div id="countdown-section" class="card mb-16">
+      <div id="countdown-label">Countdown bis zum Abflug</div>
+      <div id="countdown-timer">
+        <div class="cd-unit">
+          <span class="cd-value" id="cd-days">--</span>
+          <span class="cd-label">Tage</span>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit">
+          <span class="cd-value" id="cd-hours">--</span>
+          <span class="cd-label">Std</span>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit">
+          <span class="cd-value" id="cd-mins">--</span>
+          <span class="cd-label">Min</span>
+        </div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit">
+          <span class="cd-value" id="cd-secs">--</span>
+          <span class="cd-label">Sek</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emoji-Sammelleiste -->
+    <div id="emoji-bar-section">
+      <div id="emoji-bar-label">Gesammelte Zeichen</div>
+      <div id="emoji-bar">
+        <!-- 8 slots filled by JS -->
+      </div>
+    </div>
+
+    <!-- Tages-Karten -->
+    <div id="day-cards">
+      <!-- filled by JS -->
+    </div>
+
+    <p class="text-center dim" style="font-size:12px; padding: 0 16px 16px;">
+      Jeden Tag warten neue Rätsel auf dich ✨
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       GEDICHT-INTRO SCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="poem-screen" class="screen">
+    <button class="back-btn" onclick="showScreen('main-screen', true)">← Zurück</button>
+    <div class="card">
+      <div id="poem-game-title" class="gold" style="font-size:18px; font-weight:700; text-align:center; margin-bottom:12px;"></div>
+      <div id="poem-text" class="poem-text"></div>
+    </div>
+    <div id="play-btn-wrap" style="margin-top:20px; display:none;">
+      <button class="btn btn-primary" onclick="startCurrentGame()">Spielen! 🎮</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       GAME SCREEN (content injected by JS)
+  ═══════════════════════════════════════════ -->
+  <div id="game-screen" class="screen">
+    <button class="back-btn" id="game-back-btn" onclick="showScreen('main-screen', true)">← Zurück</button>
+    <div id="game-content"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SIEG-SCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="victory-screen" class="screen">
+    <div style="padding: 20px 0;">
+      <div class="victory-title">🎉 Gelöst!</div>
+      <div id="victory-word-display" class="victory-word"></div>
+      <div id="victory-emoji-big" class="victory-emoji-big"></div>
+      <p id="victory-text" class="dim italic text-center mb-16"></p>
+      <div id="victory-bar-preview" style="text-align:center; margin: 16px 0 24px;">
+        <div class="dim" style="font-size:13px; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Dein Zeichen</div>
+        <div id="victory-bar-slots" style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;"></div>
+      </div>
+      <button class="btn btn-primary" id="victory-continue-btn" onclick="afterVictory()">Weiter ✨</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SAMSTAG-SPECIAL SCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="saturday-screen" class="screen">
+    <div id="saturday-stars"></div>
+    <div style="position:relative; z-index:1; padding:16px;">
+
+      <!-- Phase 1: Sammlung -->
+      <div class="saturday-phase" id="sat-phase-1">
+        <div style="text-align:center; padding: 20px 0 12px;">
+          <div style="font-size:36px;">🌟</div>
+          <h2 style="font-size:20px; font-weight:800; margin-top:8px;">Alle Zeichen gesammelt!</h2>
+        </div>
+        <div class="card mb-16">
+          <p class="text-center italic dim mb-16">Du hast alle 8 Zeichen gesammelt.<br>Jetzt wird entschlüsselt...</p>
+          <div class="reveal-emojis" id="sat-emojis-row"></div>
+        </div>
+        <button class="btn btn-primary" id="sat-p1-btn" onclick="satNextPhase(2)">Entschlüsseln ✨</button>
+      </div>
+
+      <!-- Phase 2: Decoder -->
+      <div class="saturday-phase" id="sat-phase-2">
+        <div style="text-align:center; padding: 16px 0 12px;">
+          <div style="font-size:30px;">🔓</div>
+          <h2 style="font-size:18px; font-weight:800; margin-top:8px;">Decoder läuft...</h2>
+        </div>
+        <div class="card mb-16">
+          <div class="reveal-emojis" id="sat-decoder-row"></div>
+        </div>
+        <button class="btn btn-primary" id="sat-p2-btn" style="display:none;" onclick="satNextPhase(3)">Buchstaben ordnen ✨</button>
+      </div>
+
+      <!-- Phase 3: Buchstaben ordnen → BALEAREN -->
+      <div class="saturday-phase" id="sat-phase-3">
+        <div style="text-align:center; padding: 16px 0 12px;">
+          <div style="font-size:30px;">🔀</div>
+          <h2 style="font-size:18px; font-weight:800; margin-top:8px;">Die Buchstaben ordnen sich...</h2>
+        </div>
+        <div class="card mb-16">
+          <div id="sat-shuffle-display" style="text-align:center; font-size:28px; font-weight:800; letter-spacing:8px; padding:16px 0; min-height:60px;"></div>
+        </div>
+        <div id="sat-balearen-wrap" style="display:none;">
+          <div class="balearen-text" id="sat-balearen-text">BALEAREN</div>
+          <p class="text-center italic dim mb-16">Die Balearischen Inseln! Aber welche...?</p>
+          <button class="btn btn-primary" onclick="satNextPhase(4)">Das Akrostichon 📜</button>
+        </div>
+      </div>
+
+      <!-- Phase 4: Akrostichon -->
+      <div class="saturday-phase" id="sat-phase-4">
+        <div style="text-align:center; padding: 16px 0 12px;">
+          <div style="font-size:30px;">📜</div>
+          <h2 style="font-size:18px; font-weight:800; margin-top:8px;">Ein letztes Gedicht...</h2>
+        </div>
+        <div class="card mb-16">
+          <div class="acrostic-poem" id="sat-acrostic"></div>
+        </div>
+        <button class="btn btn-primary" id="sat-p4-btn" style="display:none;" onclick="satNextPhase(5)">Die Enthüllung! ✨</button>
+      </div>
+
+      <!-- Phase 5: IBIZA-Reveal -->
+      <div class="saturday-phase" id="sat-phase-5">
+        <div style="text-align:center; padding:30px 0 16px;">
+          <div class="ibiza-reveal">✈️ IBIZA ✈️</div>
+          <p class="text-center italic" style="font-size:16px; margin-top:8px;">Euer Abenteuer beginnt jetzt!</p>
+        </div>
+        <button class="btn btn-primary" onclick="satNextPhase(6)">Flugdaten anzeigen 🛫</button>
+      </div>
+
+      <!-- Phase 6: Flugdaten -->
+      <div class="saturday-phase" id="sat-phase-6">
+        <div style="text-align:center; padding:16px 0 12px;">
+          <div style="font-size:32px;">🛫</div>
+          <h2 style="font-size:18px; font-weight:800; margin-top:8px;">Eure Reisedetails</h2>
+        </div>
+        <div class="flight-card">
+          <div class="flight-card-row">
+            <span class="flight-card-icon">✈️</span>
+            <span class="flight-card-text"><strong>Flug DE 1500 · Condor</strong></span>
+          </div>
+          <div class="flight-card-row">
+            <span class="flight-card-icon">📍</span>
+            <span class="flight-card-text">Frankfurt (FRA) → Ibiza (IBZ)</span>
+          </div>
+          <div class="flight-card-row">
+            <span class="flight-card-icon">🕐</span>
+            <span class="flight-card-text">10.05.2026, 04:50 Uhr</span>
+          </div>
+          <div class="flight-card-row">
+            <span class="flight-card-icon">🏨</span>
+            <span class="flight-card-text">Invisa Hotel Club Cala Verde</span>
+          </div>
+        </div>
+        <p class="text-center dim italic" style="font-size:13px; margin-top:8px;">
+          Schau auf die Anzeigetafel am Gate — dort steht es auch! 😏
+        </p>
+        <div class="card mt-16" style="text-align:center; padding:12px;">
+          <div class="dim" style="font-size:12px; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Noch bis zum Abflug</div>
+          <div id="sat-final-countdown" style="font-size:20px; font-weight:700; color:var(--gold);"></div>
+        </div>
+        <button class="btn btn-secondary mt-16" onclick="showScreen('main-screen', true)">Zurück zum Start 🌴</button>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+// === STATUS: Commit 1 — Grundstruktur, Countdown, Tages-Karten, Emoji-Leiste ===
+// Spiele folgen in Commit 2–5, Saturday Special in Commit 6
+
+'use strict';
+
+// ─── KONFIGURATION ───────────────────────────────────────────────
+const STORAGE_KEY = 'ibiza-adventure-2026';
+const FLIGHT_DATE = new Date('2026-05-10T04:50:00');
+
+const DAYS_CONFIG = [
+  { id: 'tuesday',   date: '2026-05-06', label: 'Di 6.5.',  games: ['kamera', 'condor'],  special: false },
+  { id: 'wednesday', date: '2026-05-07', label: 'Mi 7.5.',  games: ['koffer', 'pinien'],  special: false },
+  { id: 'thursday',  date: '2026-05-08', label: 'Do 8.5.',  games: ['felsen', 'krabbe'],  special: false },
+  { id: 'friday',    date: '2026-05-09', label: 'Fr 9.5.',  games: ['salz',   'insel'],   special: false },
+  { id: 'saturday',  date: '2026-05-10', label: 'Sa 10.5.', games: ['special'],           special: true  }
+];
+
+const GAMES = {
+  kamera: { emoji: '📸', word: 'KAMERA', letterIndex: 1, letter: 'A', balePos: 2 },
+  condor: { emoji: '🦅', word: 'CONDOR', letterIndex: 5, letter: 'R', balePos: 6 },
+  koffer: { emoji: '🧳', word: 'KOFFER', letterIndex: 4, letter: 'E', balePos: 4 },
+  pinien: { emoji: '🌲', word: 'PINIEN', letterIndex: 5, letter: 'N', balePos: 8 },
+  felsen: { emoji: '🪨', word: 'FELSEN', letterIndex: 4, letter: 'E', balePos: 7 },
+  krabbe: { emoji: '🦀', word: 'KRABBE', letterIndex: 3, letter: 'B', balePos: 1 },
+  salz:   { emoji: '🧂', word: 'SALZ',   letterIndex: 1, letter: 'A', balePos: 5 },
+  insel:  { emoji: '🏝️', word: 'INSEL',  letterIndex: 4, letter: 'L', balePos: 3 }
+};
+
+// Reihenfolge der Emojis in der Sammelleiste (Spielreihenfolge Di→Fr)
+const EMOJI_ORDER = ['📸','🦅','🧳','🌲','🪨','🦀','🧂','🏝️'];
+
+const POEMS = {
+  kamera: [
+    'Ich friere Zeit ein mit einem einzigen Klick,',
+    'und schenke dir Erinnerungen immer zurück.',
+    'Kein Pinsel, kein Stift — und doch male ich fein.',
+    'Was bin ich? Du wirst es wohl wissen!'
+  ],
+  condor: [
+    'In den Anden bin ich zu Hause,',
+    'über Gipfel gleit ich ohne Pause.',
+    'Der größte Vogel, der fliegen kann —',
+    'mein Name fängt mit C, nicht K an.'
+  ],
+  koffer: [
+    'Du füllst mich mit Kleidern und allerlei Sachen,',
+    'ich begleite dich, wenn Reisen dir Spaß machen.',
+    'Ich habe Rollen und manchmal ein Schloss —',
+    'pack mich voll, denn bald geht es los!'
+  ],
+  pinien: [
+    'Wir duften nach Harz und Mittelmeer,',
+    'unsere Kronen schirmen vor der Sonne sehr.',
+    'Nadeln statt Blätter, grün das ganze Jahr —',
+    'am Strand des Südens stehn wir als Paar.'
+  ],
+  felsen: [
+    'Grau und massiv steh ich im Meer,',
+    'die Brandung prallt — ich bin steinig und schwer.',
+    'Möwen kreisen über meinem Haupt,',
+    'mancher hat an Magie bei mir geglaubt.'
+  ],
+  krabbe: [
+    'Ich laufe seitwärts durch den Sand,',
+    'zwei Scheren fest in meiner Hand.',
+    'Fang mich ein, wenn du es schaffst —',
+    'bevor die Welle mich wegschnappt!'
+  ],
+  salz: [
+    'Ich komme aus dem ___, doch bin ich nicht nass.',
+    'In der Sonne ___ ich — ganz ohne Spaß.',
+    'Weiß wie Schnee, doch kalt bin ich nicht,',
+    'ohne mich schmeckt kein einziges ___.'
+  ],
+  insel: [
+    'Von Wasser umgeben, doch kein Boot bin ich.',
+    'Menschen leben auf mir, ganz gemütlich.',
+    'Manche von uns sind ein Paradies —',
+    'mit Palmen und Sand, traumhaft und süß.'
+  ]
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { completedGames: [], collectedEmojis: [], introSeen: false };
+}
+
+function saveState(state) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ─── URL-PARAMETER ────────────────────────────────────────────────
+const urlParams = new URLSearchParams(location.search);
+const DEBUG_MODE = urlParams.has('debug');
+
+if (urlParams.has('reset')) {
+  localStorage.removeItem(STORAGE_KEY);
+  location.replace(location.pathname);
+}
+
+// ─── HILFSFUNKTIONEN ─────────────────────────────────────────────
+function isDayUnlocked(dateStr) {
+  if (DEBUG_MODE) return true;
+  const now = new Date();
+  const day = new Date(dateStr + 'T00:00:00');
+  return now >= day;
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function formatCountdown(ms) {
+  if (ms <= 0) return { days: '0', hours: '00', mins: '00', secs: '00' };
+  const totalSec = Math.floor(ms / 1000);
+  const days  = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins  = Math.floor((totalSec % 3600) / 60);
+  const secs  = totalSec % 60;
+  return { days: String(days), hours: pad2(hours), mins: pad2(mins), secs: pad2(secs) };
+}
+
+// ─── SCREEN-NAVIGATION ────────────────────────────────────────────
+let currentScreen = 'main-screen';
+
+function showScreen(id, back = false) {
+  const prev = document.getElementById(currentScreen);
+  const next = document.getElementById(id);
+  if (prev) prev.classList.remove('active');
+  next.classList.remove('slide-back');
+  if (back) next.classList.add('slide-back');
+  else next.classList.remove('slide-back');
+  next.classList.add('active');
+  currentScreen = id;
+  window.scrollTo(0, 0);
+  if (id === 'main-screen') refreshMainScreen();
+}
+
+// ─── COUNTDOWN ────────────────────────────────────────────────────
+function tickCountdown() {
+  const now = new Date();
+  const diff = FLIGHT_DATE - now;
+  const c = formatCountdown(diff);
+  const el = (id) => document.getElementById(id);
+  el('cd-days').textContent  = c.days;
+  el('cd-hours').textContent = c.hours;
+  el('cd-mins').textContent  = c.mins;
+  el('cd-secs').textContent  = c.secs;
+
+  // Samstag-Special Finalcountdown
+  const satFinal = document.getElementById('sat-final-countdown');
+  if (satFinal) {
+    const d = formatCountdown(diff);
+    satFinal.textContent = `${d.days}T ${d.hours}:${d.mins}:${d.secs}`;
+  }
+}
+
+// ─── EMOJI-SAMMELLEISTE ──────────────────────────────────────────
+function renderEmojiBar(animate = false) {
+  const state = loadState();
+  const bar = document.getElementById('emoji-bar');
+  bar.innerHTML = '';
+  EMOJI_ORDER.forEach((emoji, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'emoji-slot';
+    const collected = state.collectedEmojis.includes(emoji);
+    if (collected) {
+      slot.classList.add('filled');
+      slot.textContent = emoji;
+      if (animate && i === state.collectedEmojis.length - 1) {
+        slot.classList.add('pop');
+      }
+    }
+    bar.appendChild(slot);
+  });
+}
+
+// ─── TAGES-KARTEN RENDERN ─────────────────────────────────────────
+function getDayEmojis(dayConf) {
+  return dayConf.games
+    .filter(g => g !== 'special')
+    .map(g => GAMES[g].emoji)
+    .join(' ');
+}
+
+function getDayProgress(dayConf, state) {
+  if (dayConf.special) {
+    return state.completedGames.includes('special') ? '✅' : '';
+  }
+  const done = dayConf.games.filter(g => state.completedGames.includes(g)).length;
+  return `${done} / ${dayConf.games.length}`;
+}
+
+function renderDayCards() {
+  const state  = loadState();
+  const grid   = document.getElementById('day-cards');
+  grid.innerHTML = '';
+
+  DAYS_CONFIG.forEach(day => {
+    const unlocked = isDayUnlocked(day.date);
+    const allDone  = day.special
+      ? state.completedGames.includes('special')
+      : day.games.every(g => state.completedGames.includes(g));
+
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    if (day.special) card.classList.add('saturday');
+
+    if (!unlocked) {
+      card.classList.add('locked');
+    } else if (allDone) {
+      card.classList.add('completed');
+    } else {
+      card.classList.add('available');
+    }
+
+    if (day.special) {
+      const icon = unlocked ? (allDone ? '⭐' : '🌟') : '🔒';
+      card.innerHTML = `
+        <div class="day-card-date">${day.label}</div>
+        <div class="day-card-icon">${icon}</div>
+        <div class="day-card-label">SPECIAL</div>
+        <div class="day-card-progress" style="color:var(--gold)">${allDone ? '✅ Enthüllt' : (unlocked ? 'Bereit!' : 'Gesperrt')}</div>
+      `;
+    } else {
+      const icon = !unlocked ? '🔒' : (allDone ? '✅' : '🎮');
+      const progress = getDayProgress(day, state);
+      const emojis   = getDayEmojis(day);
+      card.innerHTML = `
+        <div class="day-card-date">${day.label}</div>
+        <div class="day-card-icon">${icon}</div>
+        <div class="day-card-emojis">${emojis}</div>
+        <div class="day-card-progress">${unlocked ? progress : ''}</div>
+      `;
+    }
+
+    if (unlocked) {
+      card.addEventListener('click', () => openDayCard(day));
+      card.addEventListener('touchstart', () => {}, { passive: true });
+    }
+    grid.appendChild(card);
+  });
+}
+
+function openDayCard(day) {
+  if (day.special) {
+    startSaturdaySpecial();
+    return;
+  }
+  // Zeige welche Spiele heute noch offen sind
+  const state = loadState();
+  const nextGame = day.games.find(g => !state.completedGames.includes(g));
+  if (nextGame) {
+    openGamePoem(nextGame);
+  } else {
+    // Alle gemacht — erstes Spiel nochmal spielen (Wiederholen)
+    openGamePoem(day.games[0]);
+  }
+}
+
+// ─── GEDICHT-INTRO ────────────────────────────────────────────────
+let currentGameId = null;
+
+function openGamePoem(gameId) {
+  currentGameId = gameId;
+  const game  = GAMES[gameId];
+  const lines = POEMS[gameId];
+
+  document.getElementById('poem-game-title').textContent = `${game.emoji}  ${game.word}`;
+  document.getElementById('play-btn-wrap').style.display = 'none';
+
+  const poemEl = document.getElementById('poem-text');
+  poemEl.innerHTML = '';
+
+  lines.forEach((line, i) => {
+    const span = document.createElement('span');
+    span.className = 'poem-line';
+    span.textContent = line;
+    poemEl.appendChild(span);
+    poemEl.appendChild(document.createTextNode('\n'));
+  });
+
+  showScreen('poem-screen');
+
+  // Zeilen nacheinander einblenden
+  const lineEls = poemEl.querySelectorAll('.poem-line');
+  lineEls.forEach((el, i) => {
+    setTimeout(() => {
+      el.classList.add('visible');
+      if (i === lineEls.length - 1) {
+        setTimeout(() => {
+          document.getElementById('play-btn-wrap').style.display = 'block';
+        }, 600);
+      }
+    }, i * 1200);
+  });
+}
+
+function startCurrentGame() {
+  if (!currentGameId) return;
+  showScreen('game-screen');
+  launchGame(currentGameId);
+}
+
+// ─── SIEG-HANDLER ─────────────────────────────────────────────────
+function onGameWon(gameId) {
+  const game  = GAMES[gameId];
+  const state = loadState();
+  if (!state.completedGames.includes(gameId)) {
+    state.completedGames.push(gameId);
+    state.collectedEmojis.push(game.emoji);
+    saveState(state);
+  }
+  showVictoryScreen(game);
+}
+
+function showVictoryScreen(game) {
+  // Lösungswort mit hervorgehobenem Buchstaben
+  const wordEl = document.getElementById('victory-word-display');
+  wordEl.innerHTML = game.word.split('').map((ch, i) => {
+    const cls = i === game.letterIndex ? 'highlight' : '';
+    return `<span class="${cls}">${ch}</span>`;
+  }).join('<span style="color:rgba(255,255,255,0.3)"> · </span>');
+
+  document.getElementById('victory-emoji-big').textContent = game.emoji;
+  document.getElementById('victory-text').textContent = `Dein Zeichen: ${game.emoji}`;
+
+  // Mini-Leiste im Sieg-Screen
+  const state = loadState();
+  const slotsEl = document.getElementById('victory-bar-slots');
+  slotsEl.innerHTML = '';
+  EMOJI_ORDER.forEach(emoji => {
+    const slot = document.createElement('div');
+    slot.className = 'emoji-slot';
+    slot.style.width = '36px';
+    slot.style.height = '36px';
+    if (state.collectedEmojis.includes(emoji)) {
+      slot.classList.add('filled');
+      slot.textContent = emoji;
+      if (emoji === game.emoji) slot.classList.add('pop');
+    }
+    slotsEl.appendChild(slot);
+  });
+
+  showScreen('victory-screen');
+  launchConfetti();
+}
+
+function afterVictory() {
+  showScreen('main-screen', true);
+  renderEmojiBar(true);
+}
+
+// ─── KONFETTI ─────────────────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#f59e0b','#ef4444','#10b981','#3b82f6','#8b5cf6','#ec4899'];
+  for (let i = 0; i < 50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.top  = '-20px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width  = (6 + Math.random() * 6) + 'px';
+    el.style.height = (10 + Math.random() * 8) + 'px';
+    el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    el.style.animationDelay   = (Math.random() * 0.8) + 's';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+// ─── HAUPTSCREEN REFRESH ──────────────────────────────────────────
+function refreshMainScreen() {
+  renderEmojiBar();
+  renderDayCards();
+}
+
+// ─── GAME LAUNCHER (Stub — Spiele folgen in Commit 2+) ────────────
+function launchGame(gameId) {
+  const el = document.getElementById('game-content');
+  // Jedes Spiel überschreibt diesen Container
+  // Die eigentlichen Implementierungen folgen in nachfolgenden Commits
+  el.innerHTML = `<div class="text-center" style="padding:40px 0;">
+    <div style="font-size:60px;">${GAMES[gameId].emoji}</div>
+    <p class="mt-16">Spiel wird geladen...</p>
+  </div>`;
+}
+
+// ─── SATURDAY SPECIAL (Stub — folgt in Commit 6) ──────────────────
+function startSaturdaySpecial() {
+  showScreen('saturday-screen');
+  buildStars();
+  satShowPhase(1);
+}
+
+function buildStars() {
+  const container = document.getElementById('saturday-stars');
+  if (container.children.length > 0) return;
+  for (let i = 0; i < 50; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = 1 + Math.random() * 3;
+    star.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}vw;
+      top:${Math.random()*100}vh;
+      animation-delay:${Math.random()*3}s;
+      animation-duration:${2+Math.random()*2}s;
+    `;
+    container.appendChild(star);
+  }
+}
+
+function satShowPhase(n) {
+  document.querySelectorAll('.saturday-phase').forEach(el => el.classList.remove('active'));
+  const ph = document.getElementById(`sat-phase-${n}`);
+  if (ph) ph.classList.add('active');
+}
+
+function satNextPhase(n) {
+  satShowPhase(n);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+(function init() {
+  refreshMainScreen();
+  tickCountdown();
+  setInterval(tickCountdown, 1000);
+
+  if (DEBUG_MODE) {
+    const badge = document.createElement('div');
+    badge.style.cssText = 'position:fixed;top:4px;right:4px;background:var(--error);color:white;font-size:10px;padding:2px 6px;border-radius:6px;z-index:9999;font-weight:700;';
+    badge.textContent = 'DEBUG';
+    document.body.appendChild(badge);
+  }
+})();
+</script>
+</body>
+</html>
