@@ -1353,11 +1353,9 @@ function renderDayCards() {
     } else {
       const icon = !unlocked ? '🔒' : (allDone ? '✅' : '🎮');
       const progress = getDayProgress(day, state);
-      const emojis   = getDayEmojis(day);
       card.innerHTML = `
         <div class="day-card-date">${day.label}</div>
         <div class="day-card-icon">${icon}</div>
-        <div class="day-card-emojis">${emojis}</div>
         <div class="day-card-progress">${unlocked ? progress : ''}</div>
       `;
     }
