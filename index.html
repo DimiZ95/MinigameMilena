@@ -1832,8 +1832,213 @@ function launchPinien() {
 
   render();
 }
-function launchFelsen() { _gameStub('felsen'); }
-function launchKrabbe() { _gameStub('krabbe'); }
+// ═══════════════════════════════════════════════════════════════════
+// COMMIT 4 — DONNERSTAGS-SPIELE: FELSEN + KRABBE
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── SPIEL 5: FELSEN — Gedicht-Quiz ──────────────────────────────
+function launchFelsen() {
+  const questions = [
+    {
+      q: 'Was kreist über dem Felsen?',
+      options: ['Adler', 'Möwen', 'Schmetterlinge'],
+      answer: 'Möwen'
+    },
+    {
+      q: 'Wie wird der Felsen beschrieben?',
+      options: ['Klein und rund', 'Leicht und schwebend', 'Grau und massiv'],
+      answer: 'Grau und massiv'
+    },
+    {
+      q: 'Woran hat man beim Felsen geglaubt?',
+      options: ['An Gold', 'An Magie', 'An Geister'],
+      answer: 'Magie'
+    }
+  ];
+  let qi = 0;
+
+  function render() {
+    const q = questions[qi];
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">🪨 FELSEN</div>
+      <div class="round-indicator">Frage ${qi+1} von ${questions.length}</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${(qi/questions.length)*100}%"></div>
+      </div>
+      <div class="card">
+        <div class="quiz-question">${q.q}</div>
+        <div class="quiz-options" id="quiz-opts">
+          ${q.options.map(opt =>
+            `<button class="quiz-option" onclick="felsenAnswer('${opt}')">${opt}</button>`
+          ).join('')}
+        </div>
+        <div class="feedback-msg" id="felsen-fb"></div>
+      </div>
+    `;
+  }
+
+  window.felsenAnswer = function(opt) {
+    const q = questions[qi];
+    const btns = document.querySelectorAll('.quiz-option');
+    btns.forEach(b => b.onclick = null);
+
+    if (opt === q.answer) {
+      btns.forEach(b => { if (b.textContent === opt) b.classList.add('correct'); });
+      document.getElementById('felsen-fb').textContent = '✓ Richtig!';
+      document.getElementById('felsen-fb').className = 'feedback-msg good';
+      setTimeout(() => {
+        qi++;
+        if (qi < questions.length) render();
+        else onGameWon('felsen');
+      }, 900);
+    } else {
+      btns.forEach(b => {
+        if (b.textContent === opt) b.classList.add('wrong');
+        if (b.textContent === q.answer) {
+          setTimeout(() => b.classList.add('correct'), 200);
+        }
+      });
+      document.getElementById('felsen-fb').textContent = 'Fast! Die richtige Antwort leuchtet auf.';
+      document.getElementById('felsen-fb').className = 'feedback-msg bad';
+      setTimeout(() => {
+        qi++;
+        if (qi < questions.length) render();
+        else onGameWon('felsen');
+      }, 1500);
+    }
+  };
+
+  render();
+}
+
+// ─── SPIEL 6: KRABBE — Fang-Spiel ────────────────────────────────
+function launchKrabbe() {
+  const NEEDED   = 10;
+  const TIME_SEC = 30;
+  const MAX_FAIL = 3;
+
+  let score    = 0;
+  let timeLeft = TIME_SEC;
+  let failures = 0;
+  let timerInt = null;
+  let spawnInt = null;
+  let crabId   = 0;
+  let gameOver = false;
+
+  function render() {
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">🦀 KRABBE</div>
+      <div id="crab-timer">⏱ ${TIME_SEC}s</div>
+      <div id="crab-score-display">Gefangen: 0 / ${NEEDED}</div>
+      <div id="crab-arena"></div>
+      <div class="feedback-msg" id="crab-fb"></div>
+    `;
+    startCrabGame();
+  }
+
+  function startCrabGame() {
+    score    = 0;
+    timeLeft = TIME_SEC;
+    gameOver = false;
+    crabId   = 0;
+    document.getElementById('crab-score-display').textContent = `Gefangen: 0 / ${NEEDED}`;
+    document.getElementById('crab-timer').textContent = `⏱ ${timeLeft}s`;
+    clearInterval(timerInt);
+    clearInterval(spawnInt);
+
+    timerInt = setInterval(() => {
+      timeLeft--;
+      const timerEl = document.getElementById('crab-timer');
+      if (timerEl) timerEl.textContent = `⏱ ${timeLeft}s`;
+      if (timeLeft <= 0) endCrabGame(false);
+    }, 1000);
+
+    spawnInt = setInterval(spawnCrab, 1500);
+    spawnCrab();
+  }
+
+  function spawnCrab() {
+    if (gameOver) return;
+    const arena = document.getElementById('crab-arena');
+    if (!arena) return;
+    const id  = crabId++;
+    const yPct = 15 + Math.random() * 70;
+    // Random direction and speed
+    const fromRight = Math.random() > 0.5;
+    const dur  = (3 + Math.random() * 2).toFixed(1);
+
+    const el = document.createElement('div');
+    el.className = 'crab-enemy';
+    el.id = `crab-${id}`;
+    el.textContent = '🦀';
+    el.style.top  = yPct + '%';
+    el.style.transform = 'translateY(-50%)';
+    el.style.animation = `crabMove${fromRight ? 'Right' : 'Left'} ${dur}s linear forwards`;
+    el.style.fontSize  = '32px';
+
+    el.onclick = () => catchCrab(id);
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); catchCrab(id); }, { passive: false });
+
+    arena.appendChild(el);
+
+    // Remove after animation
+    setTimeout(() => { el.remove(); }, parseFloat(dur) * 1000 + 200);
+  }
+
+  window.catchCrab = function(id) {
+    if (gameOver) return;
+    const el = document.getElementById(`crab-${id}`);
+    if (!el || el.classList.contains('caught')) return;
+    el.classList.add('caught');
+    el.onclick = null;
+    score++;
+    const scoreEl = document.getElementById('crab-score-display');
+    if (scoreEl) scoreEl.textContent = `Gefangen: ${score} / ${NEEDED}`;
+    if (score >= NEEDED) endCrabGame(true);
+  };
+
+  function endCrabGame(won) {
+    if (gameOver) return;
+    gameOver = true;
+    clearInterval(timerInt);
+    clearInterval(spawnInt);
+
+    if (won) {
+      onGameWon('krabbe');
+    } else {
+      failures++;
+      const fb = document.getElementById('crab-fb');
+      const content = document.getElementById('game-content');
+      let html = `<div class="feedback-msg bad" style="font-size:16px; margin:16px 0;">
+        Nur ${score} von ${NEEDED} erwischt! ${failures < MAX_FAIL ? 'Nochmal!' : ''}
+      </div>
+      <button class="btn btn-primary" onclick="launchKrabbe()">🔄 Nochmal!</button>`;
+      if (failures >= MAX_FAIL) {
+        html += `<button class="btn btn-secondary mt-16" onclick="onGameWon('krabbe')">Überspringen ➜</button>`;
+      }
+      content.innerHTML = `<div class="game-title">🦀 KRABBE</div>${html}`;
+    }
+  }
+
+  // CSS-Keyframes für Krabbe inline einbinden (einmalig)
+  if (!document.getElementById('crab-anim-style')) {
+    const style = document.createElement('style');
+    style.id = 'crab-anim-style';
+    style.textContent = `
+      @keyframes crabMoveRight {
+        from { left: -8%; }
+        to   { left: 108%; }
+      }
+      @keyframes crabMoveLeft {
+        from { left: 108%; }
+        to   { left: -8%; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  render();
+}
 function launchSalz()   { _gameStub('salz'); }
 function launchInsel()  { _gameStub('insel'); }
 
