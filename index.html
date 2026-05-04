@@ -1479,13 +1479,208 @@ function refreshMainScreen() {
 
 // ─── GAME LAUNCHER (Stub — Spiele folgen in Commit 2+) ────────────
 function launchGame(gameId) {
-  const el = document.getElementById('game-content');
-  // Jedes Spiel überschreibt diesen Container
-  // Die eigentlichen Implementierungen folgen in nachfolgenden Commits
-  el.innerHTML = `<div class="text-center" style="padding:40px 0;">
-    <div style="font-size:60px;">${GAMES[gameId].emoji}</div>
-    <p class="mt-16">Spiel wird geladen...</p>
-  </div>`;
+  const handlers = {
+    kamera: launchKamera,
+    condor: launchCondor,
+    koffer: launchKoffer,
+    pinien: launchPinien,
+    felsen: launchFelsen,
+    krabbe: launchKrabbe,
+    salz:   launchSalz,
+    insel:  launchInsel
+  };
+  const fn = handlers[gameId];
+  if (fn) fn();
+  else {
+    document.getElementById('game-content').innerHTML =
+      `<div class="text-center" style="padding:40px 0;">
+        <div style="font-size:60px;">${GAMES[gameId].emoji}</div>
+        <p class="mt-16 dim">Bald verfügbar...</p>
+      </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// COMMIT 2 — DIENSTAGS-SPIELE: KAMERA + CONDOR
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── SPIEL 1: KAMERA — Silhouetten-Quiz ──────────────────────────
+function launchKamera() {
+  const rounds = [
+    { emoji: '🐘', options: ['Pferd','Elefant','Nashorn'], answer: 'Elefant' },
+    { emoji: '🎸', options: ['Gitarre','Geige','Trompete'], answer: 'Gitarre' },
+    { emoji: '📸', options: ['Fernseher','Radio','Kamera'], answer: 'Kamera' }
+  ];
+  let round = 0;
+
+  function render() {
+    const r = rounds[round];
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">📸 KAMERA</div>
+      <div class="round-indicator">Runde ${round+1} von ${rounds.length}</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${(round/rounds.length)*100}%"></div></div>
+      <div class="card text-center" style="padding:20px 16px;">
+        <p class="dim italic mb-8" style="font-size:13px;">Was ist diese Silhouette?</p>
+        <div class="silhouette-emoji" id="sil-emoji">${r.emoji}</div>
+        <div class="answer-grid" id="ans-grid">
+          ${r.options.map(opt => `<button class="answer-btn" onclick="kameraAnswer('${opt}')">${opt}</button>`).join('')}
+        </div>
+        <div class="feedback-msg" id="k-feedback"></div>
+      </div>
+    `;
+  }
+
+  window.kameraAnswer = function(opt) {
+    const r = rounds[round];
+    const btns = document.querySelectorAll('.answer-btn');
+    btns.forEach(b => b.onclick = null);
+
+    if (opt === r.answer) {
+      btns.forEach(b => { if (b.textContent === opt) b.classList.add('correct'); });
+      document.getElementById('sil-emoji').classList.add('revealed');
+      document.getElementById('k-feedback').textContent = '✓ Richtig!';
+      document.getElementById('k-feedback').className = 'feedback-msg good';
+      setTimeout(() => {
+        round++;
+        if (round < rounds.length) render();
+        else onGameWon('kamera');
+      }, 900);
+    } else {
+      btns.forEach(b => { if (b.textContent === opt) b.classList.add('wrong'); });
+      document.getElementById('k-feedback').textContent = 'Nochmal versuchen!';
+      document.getElementById('k-feedback').className = 'feedback-msg bad';
+      setTimeout(() => {
+        btns.forEach(b => { b.classList.remove('wrong'); b.onclick = () => kameraAnswer(b.textContent); });
+        document.getElementById('k-feedback').textContent = '';
+      }, 700);
+    }
+  };
+
+  render();
+}
+
+// ─── SPIEL 2: CONDOR — Reaktionsspiel ────────────────────────────
+function launchCondor() {
+  const speeds = [2500, 2500, 2000, 2000, 1500]; // ms je Richtung
+  let currentRound = 0;
+  let birdPos = 0;       // 0..100 (%)
+  let goingRight = true;
+  let animFrame = null;
+  let lastTime = null;
+  let failures = 0;
+
+  // Goldene Zone: 35–65%
+  const ZONE_LEFT = 35, ZONE_RIGHT = 65;
+
+  function isInZone() { return birdPos >= ZONE_LEFT && birdPos <= ZONE_RIGHT; }
+
+  function buildUI() {
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">🦅 CONDOR</div>
+      <div class="round-indicator" id="condor-round">Runde ${currentRound+1} von ${speeds.length}</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="condor-prog" style="width:${(currentRound/speeds.length)*100}%"></div>
+      </div>
+      <div class="card" style="padding:20px 16px;">
+        <p class="text-center dim italic mb-8" style="font-size:13px;">
+          Tippe wenn der Condor in der goldenen Zone ist!
+        </p>
+        <div class="bird-track" id="bird-track">
+          <div class="golden-zone">ZONE</div>
+          <div class="flying-bird" id="flying-bird">🦅</div>
+        </div>
+        <div class="feedback-msg" id="condor-feedback"></div>
+        <button id="tap-btn" class="out-zone" ontouchstart="condorTap(event)" onclick="condorTap(event)">
+          JETZT TIPPEN!
+        </button>
+      </div>
+    `;
+  }
+
+  function updateBirdVisual() {
+    const bird = document.getElementById('flying-bird');
+    const btn  = document.getElementById('tap-btn');
+    if (!bird || !btn) return;
+    bird.style.left = birdPos + '%';
+    bird.style.transform = `translateY(-50%) scaleX(${goingRight ? 1 : -1})`;
+    if (isInZone()) {
+      btn.className = 'in-zone';
+      btn.style.cssText = 'width:100%;height:72px;border-radius:16px;font-size:20px;font-weight:800;letter-spacing:2px;border:none;cursor:pointer;background:var(--success);color:white;transition:background 0.2s;';
+    } else {
+      btn.className = 'out-zone';
+      btn.style.cssText = 'width:100%;height:72px;border-radius:16px;font-size:20px;font-weight:800;letter-spacing:2px;border:none;cursor:pointer;background:var(--error);color:white;transition:background 0.2s;';
+    }
+  }
+
+  function animate(ts) {
+    if (!lastTime) lastTime = ts;
+    const dt = ts - lastTime;
+    lastTime = ts;
+    const speed = speeds[Math.min(currentRound, speeds.length-1)];
+    const delta = (dt / speed) * 100;
+    if (goingRight) {
+      birdPos += delta;
+      if (birdPos >= 100) { birdPos = 100; goingRight = false; }
+    } else {
+      birdPos -= delta;
+      if (birdPos <= 0) { birdPos = 0; goingRight = true; }
+    }
+    updateBirdVisual();
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  window.condorTap = function(e) {
+    if (e) e.preventDefault();
+    if (isInZone()) {
+      cancelAnimationFrame(animFrame);
+      animFrame = null;
+      const fb = document.getElementById('condor-feedback');
+      fb.textContent = 'Treffer! ✓';
+      fb.className = 'feedback-msg good';
+      failures = 0;
+      setTimeout(() => {
+        currentRound++;
+        if (currentRound >= speeds.length) {
+          onGameWon('condor');
+        } else {
+          lastTime = null;
+          birdPos = 0;
+          goingRight = true;
+          buildUI();
+          document.getElementById('condor-round').textContent = `Runde ${currentRound+1} von ${speeds.length}`;
+          document.getElementById('condor-prog').style.width = `${(currentRound/speeds.length)*100}%`;
+          animFrame = requestAnimationFrame(animate);
+        }
+      }, 700);
+    } else {
+      failures++;
+      const fb = document.getElementById('condor-feedback');
+      fb.textContent = 'Knapp vorbei! Nochmal';
+      fb.className = 'feedback-msg bad';
+      setTimeout(() => { if (fb) fb.textContent = ''; }, 800);
+    }
+  };
+
+  buildUI();
+  animFrame = requestAnimationFrame(animate);
+}
+
+// ─── PLATZHALTER für Mi/Do/Fr Spiele (folgen in Commit 3–5) ──────
+function launchKoffer() { _gameStub('koffer'); }
+function launchPinien() { _gameStub('pinien'); }
+function launchFelsen() { _gameStub('felsen'); }
+function launchKrabbe() { _gameStub('krabbe'); }
+function launchSalz()   { _gameStub('salz'); }
+function launchInsel()  { _gameStub('insel'); }
+
+function _gameStub(id) {
+  document.getElementById('game-content').innerHTML = `
+    <div class="text-center" style="padding:40px 0;">
+      <div style="font-size:60px;">${GAMES[id].emoji}</div>
+      <p class="mt-16 dim">Spiel kommt bald...</p>
+      <button class="btn btn-primary mt-24" onclick="onGameWon('${id}')">Direkt gewinnen (Test)</button>
+    </div>
+  `;
 }
 
 // ─── SATURDAY SPECIAL (Stub — folgt in Commit 6) ──────────────────
