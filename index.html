@@ -2039,8 +2039,178 @@ function launchKrabbe() {
 
   render();
 }
-function launchSalz()   { _gameStub('salz'); }
-function launchInsel()  { _gameStub('insel'); }
+// ═══════════════════════════════════════════════════════════════════
+// COMMIT 5 — FREITAGS-SPIELE: SALZ + INSEL
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── SPIEL 7: SALZ — Lücken-Gedicht ──────────────────────────────
+function launchSalz() {
+  const blanks = [
+    { options: ['Meer', 'Berg', 'Wald'],             answer: 'Meer',    filled: null },
+    { options: ['trockne', 'schmelze', 'wachse'],    answer: 'trockne', filled: null },
+    { options: ['Gericht', 'Gedicht', 'Gespräch'],   answer: 'Gericht', filled: null }
+  ];
+  let activeBlanki = null; // welche Lücke wird gerade beantwortet
+
+  function render() {
+    // Gedicht mit Lücken-Buttons
+    const poem = [
+      ['Ich komme aus dem ', 0, ', doch bin ich nicht nass.'],
+      ['In der Sonne ', 1, ' ich — ganz ohne Spaß.'],
+      ['Weiß wie Schnee, doch kalt bin ich nicht,'],
+      ['ohne mich schmeckt kein einziges ', 2, '.']
+    ];
+
+    let poemHTML = '';
+    poem.forEach(line => {
+      poemHTML += '<span class="poem-line visible" style="display:block; opacity:1; transform:none;">';
+      line.forEach(part => {
+        if (typeof part === 'number') {
+          const b = blanks[part];
+          if (b.filled) {
+            poemHTML += `<button class="blank-btn filled-correct">${b.filled}</button>`;
+          } else {
+            poemHTML += `<button class="blank-btn" id="blank-${part}" onclick="salzBlankClick(${part})">_ _ _</button>`;
+          }
+        } else {
+          poemHTML += part;
+        }
+      });
+      poemHTML += '</span>';
+    });
+
+    // Optionen für aktive Lücke
+    let optHTML = '';
+    if (activeBlanki !== null && !blanks[activeBlanki].filled) {
+      optHTML = `<div style="margin-top:16px;">
+        <p class="text-center dim" style="font-size:13px; margin-bottom:8px;">Wähle die richtige Antwort:</p>
+        <div class="blank-options" style="justify-content:center;">
+          ${blanks[activeBlanki].options.map(o =>
+            `<button class="btn btn-secondary" style="width:auto; min-height:44px; padding:10px 16px;" onclick="salzAnswer(${activeBlanki},'${o}')">${o}</button>`
+          ).join('')}
+        </div>
+      </div>`;
+    }
+
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">🧂 SALZ</div>
+      <p class="text-center dim italic" style="font-size:13px; margin-bottom:12px;">Tippe auf eine Lücke und fülle sie aus!</p>
+      <div class="card">
+        <div class="poem-with-blanks" id="salz-poem">${poemHTML}</div>
+        ${optHTML}
+        <div class="feedback-msg" id="salz-fb"></div>
+      </div>
+    `;
+  }
+
+  window.salzBlankClick = function(i) {
+    activeBlanki = i;
+    render();
+  };
+
+  window.salzAnswer = function(i, opt) {
+    const b = blanks[i];
+    if (opt === b.answer) {
+      b.filled = opt;
+      activeBlanki = null;
+      // Nächste offene Lücke automatisch wählen
+      const nextOpen = blanks.findIndex(bl => !bl.filled);
+      if (nextOpen !== -1) activeBlanki = nextOpen;
+      render();
+      // Alle fertig?
+      if (blanks.every(bl => bl.filled)) {
+        setTimeout(() => onGameWon('salz'), 700);
+      }
+    } else {
+      const fb = document.getElementById('salz-fb');
+      if (fb) { fb.textContent = 'Nicht ganz richtig — versuch es nochmal!'; fb.className = 'feedback-msg bad'; }
+      // Lücke kurz rot aufleuchten
+      const btn = document.getElementById(`blank-${i}`);
+      if (btn) { btn.classList.add('wrong-flash'); setTimeout(() => btn && btn.classList.remove('wrong-flash'), 400); }
+      setTimeout(() => { if (fb) fb.textContent = ''; }, 1200);
+    }
+  };
+
+  // Erste Lücke direkt aktivieren
+  activeBlanki = 0;
+  render();
+}
+
+// ─── SPIEL 8: INSEL — Buchstaben-Scramble ────────────────────────
+function launchInsel() {
+  const WORD = 'INSEL';
+  const letters = WORD.split('');
+  // Shuffle Reihenfolge der Buttons
+  let shuffled = [...letters];
+  while (shuffled.join('') === WORD) {
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+  }
+
+  let slots    = Array(WORD.length).fill(null);
+  let usedIdxs = new Set();
+
+  function render() {
+    const slotsHTML = slots.map((ch, i) =>
+      `<div class="scramble-slot ${ch ? 'filled' : ''}" id="slot-${i}">${ch || ''}</div>`
+    ).join('');
+
+    const btnsHTML = shuffled.map((ch, i) =>
+      `<button class="scramble-letter-btn ${usedIdxs.has(i) ? 'used' : ''}"
+         id="slet-${i}" onclick="inselTap(${i})">${ch}</button>`
+    ).join('');
+
+    document.getElementById('game-content').innerHTML = `
+      <div class="game-title">🏝️ INSEL</div>
+      <p class="text-center dim italic" style="font-size:13px; margin-bottom:12px;">
+        Tippe die Buchstaben in der richtigen Reihenfolge!
+      </p>
+      <div class="card" style="padding:20px 16px;">
+        <div class="scramble-slots" id="scramble-slots">${slotsHTML}</div>
+        <div class="scramble-letters" id="scramble-letters">${btnsHTML}</div>
+        <div class="feedback-msg" id="insel-fb"></div>
+        <button class="btn btn-secondary mt-8" onclick="inselReset()">↩ Zurücksetzen</button>
+      </div>
+    `;
+  }
+
+  window.inselTap = function(i) {
+    if (usedIdxs.has(i)) return;
+    const ch = shuffled[i];
+    const nextSlot = slots.findIndex(s => s === null);
+    if (nextSlot === -1) return;
+
+    // Check correct order
+    if (ch === WORD[nextSlot]) {
+      slots[nextSlot] = ch;
+      usedIdxs.add(i);
+      render();
+      if (slots.every(s => s !== null)) {
+        setTimeout(() => onGameWon('insel'), 500);
+      }
+    } else {
+      // Wrong letter — shake the slot
+      const fb = document.getElementById('insel-fb');
+      if (fb) { fb.textContent = 'Nicht der richtige Buchstabe!'; fb.className = 'feedback-msg bad'; }
+      const slotEl = document.getElementById(`slot-${nextSlot}`);
+      if (slotEl) {
+        slotEl.classList.add('error');
+        setTimeout(() => { slotEl && slotEl.classList.remove('error'); }, 400);
+      }
+      setTimeout(() => { if (fb) fb.textContent = ''; }, 900);
+    }
+  };
+
+  window.inselReset = function() {
+    slots    = Array(WORD.length).fill(null);
+    usedIdxs = new Set();
+    render();
+  };
+
+  render();
+}
 
 function _gameStub(id) {
   document.getElementById('game-content').innerHTML = `
