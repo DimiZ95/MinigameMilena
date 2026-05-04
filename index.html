@@ -11,17 +11,18 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg-top:    #0c1445;
-  --bg-mid:    #4a1942;
-  --bg-bot:    #c0392b;
+  --bg-top:    #06103a;
+  --bg-mid:    #1a2f6b;
+  --bg-bot:    #c94b0c;
   --gold:      #f59e0b;
   --gold-glow: rgba(245,158,11,0.4);
+  --teal:      #06b6d4;
   --success:   #10b981;
   --error:     #ef4444;
   --card-bg:   rgba(255,255,255,0.1);
   --card-border: rgba(255,255,255,0.2);
   --text:      #ffffff;
-  --text-dim:  rgba(255,255,255,0.7);
+  --text-dim:  rgba(255,255,255,0.65);
 }
 
 html, body {
@@ -31,14 +32,13 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bot) 100%);
-  background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
   min-height: -webkit-fill-available;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   touch-action: manipulation;
+  background: var(--bg-top);
 }
 
 /* === LAYOUT WRAPPER === */
@@ -73,12 +73,13 @@ body {
 
 /* === CARD (glassmorphism) === */
 .card {
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
+  background: rgba(255,255,255,0.11);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 20px;
   padding: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 /* === BUTTONS === */
@@ -203,72 +204,100 @@ body {
   100% { transform: scale(1); }
 }
 
-/* === DAY CARDS GRID === */
-#day-cards {
+/* === GAME TILES GRID === */
+#game-tiles {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 20px;
 }
-.day-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  padding: 16px 12px;
+.game-tile {
+  background: rgba(255,255,255,0.09);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  padding: 16px 10px;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  position: relative;
-  min-height: 100px;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  min-height: 112px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   will-change: transform;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
-.day-card:active { transform: scale(0.97); }
-.day-card.locked {
-  opacity: 0.45;
+.game-tile:active { transform: scale(0.96); }
+.game-tile.locked {
+  opacity: 0.5;
   pointer-events: none;
   cursor: default;
 }
-.day-card.available {
-  box-shadow: 0 0 15px var(--gold-glow), 0 0 30px var(--gold-glow);
+.game-tile.available {
   border-color: var(--gold);
+  box-shadow: 0 0 18px var(--gold-glow), 0 4px 20px rgba(0,0,0,0.25);
+  background: rgba(245,158,11,0.1);
 }
-.day-card.completed {
+.game-tile.completed {
   border-color: var(--success);
-  box-shadow: 0 0 10px rgba(16,185,129,0.3);
+  box-shadow: 0 0 12px rgba(16,185,129,0.35), 0 4px 16px rgba(0,0,0,0.2);
+  background: rgba(16,185,129,0.08);
 }
-.day-card.saturday {
+.game-tile.saturday-tile {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(139,92,246,0.2));
+  background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(6,182,212,0.12));
   border-color: var(--gold);
+  min-height: 88px;
 }
-.day-card-date {
-  font-size: 13px;
+.game-tile.saturday-tile.locked { opacity: 0.5; }
+.tile-num {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   color: var(--text-dim);
-  font-weight: 500;
 }
-.day-card-icon {
-  font-size: 28px;
+.tile-icon {
+  font-size: 26px;
   line-height: 1;
 }
-.day-card-label {
-  font-size: 14px;
+.tile-label {
+  font-size: 13px;
   font-weight: 700;
   color: var(--text);
 }
-.day-card-emojis {
-  font-size: 16px;
-  letter-spacing: 2px;
-}
-.day-card-progress {
+.tile-sub {
   font-size: 11px;
   color: var(--text-dim);
+  line-height: 1.3;
+}
+.tile-countdown {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal);
+  background: rgba(6,182,212,0.15);
+  border-radius: 20px;
+  padding: 2px 8px;
+  margin-top: 2px;
+}
+
+/* === INTRO CARD === */
+.intro-card {
+  background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(245,158,11,0.1));
+  border: 1px solid rgba(6,182,212,0.3);
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.intro-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.85);
+  margin: 0;
 }
 
 /* === POEM SCREEN === */
@@ -893,43 +922,103 @@ body {
 .italic { font-style: italic; }
 
 /* === IOS SAFARI FIXES === */
-/* Prevent 300ms tap delay on older iOS */
-a, button, .btn, .day-card, .answer-btn, .quiz-option, .pack-item,
-.memory-card, .scramble-letter-btn, .blank-btn, .answer-btn {
+a, button, .btn, .game-tile, .answer-btn, .quiz-option, .pack-item,
+.memory-card, .scramble-letter-btn, .blank-btn {
   touch-action: manipulation;
   -webkit-touch-callout: none;
 }
-/* Fix Safari gradient background not covering full height on scroll */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bot) 100%);
-  z-index: -1;
-}
-body {
-  background: var(--bg-top); /* fallback */
-}
-/* Safe-area padding for notch devices */
 #app {
   padding-left: max(16px, env(safe-area-inset-left));
   padding-right: max(16px, env(safe-area-inset-right));
 }
-/* Prevent text size adjustment on rotation */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* === ANIMATED BACKGROUND === */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(160deg,
+    var(--bg-top) 0%,
+    #12276e 35%,
+    #7b2d8b 60%,
+    var(--bg-bot) 100%);
+  animation: bgBreath 12s ease-in-out infinite alternate;
+  z-index: -2;
+}
+@keyframes bgBreath {
+  0%   { filter: hue-rotate(0deg)  brightness(1);    }
+  50%  { filter: hue-rotate(12deg) brightness(1.08); }
+  100% { filter: hue-rotate(-8deg) brightness(0.95); }
+}
+
+/* Floating particles (created in JS) */
+.particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  animation: particleFloat linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes particleFloat {
+  0%   { transform: translateY(0)   rotate(0deg)   scale(1);   opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 0.6; }
+  100% { transform: translateY(-100vh) rotate(540deg) scale(0.4); opacity: 0; }
+}
+
+/* Wave strip at bottom */
+#wave-strip {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none;
+}
+.wave-row {
+  position: absolute;
+  bottom: 0;
+  width: 220%;
+  height: 90px;
+}
+.wave-row:nth-child(1) { animation: waveScroll 9s linear infinite;    opacity: 0.18; }
+.wave-row:nth-child(2) { animation: waveScroll 14s linear infinite reverse; opacity: 0.10; }
+@keyframes waveScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
 
 </style>
 </head>
 <body>
+<!-- Wave background strip -->
+<div id="wave-strip">
+  <svg class="wave-row" viewBox="0 0 1440 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,45 C120,75 240,15 360,45 C480,75 600,15 720,45 C840,75 960,15 1080,45 C1200,75 1320,15 1440,45 L1440,90 L0,90 Z" fill="var(--teal)"/>
+  </svg>
+  <svg class="wave-row" viewBox="0 0 1440 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,55 C180,20 360,80 540,55 C720,20 900,80 1080,55 C1260,20 1440,80 1440,55 L1440,90 L0,90 Z" fill="var(--gold)"/>
+  </svg>
+</div>
+
 <div id="app">
 
   <!-- ═══════════════════════════════════════════
        HAUPTSCREEN
   ═══════════════════════════════════════════ -->
   <div id="main-screen" class="screen active">
-    <div style="text-align:center; padding: 20px 0 12px;">
-      <div style="font-size:36px; margin-bottom:4px;">🌴</div>
-      <h1 style="font-size:20px; font-weight:800; line-height:1.3;">Dein Abenteuer wartet</h1>
+    <div style="text-align:center; padding: 24px 0 14px;">
+      <div style="font-size:40px; margin-bottom:6px; filter: drop-shadow(0 0 12px rgba(245,158,11,0.6));">🌴</div>
+      <h1 style="font-size:22px; font-weight:900; line-height:1.3; letter-spacing:-0.3px;">Dein Abenteuer wartet</h1>
+    </div>
+
+    <!-- Intro-Erklärung -->
+    <div class="intro-card mb-16">
+      <p>Alle 12 Stunden öffnet sich ein neues Rätsel 🔐 — löse es und sammel ein geheimes Zeichen. Am Samstag werden alle Zeichen entschlüsselt und verraten, wohin die Reise geht! ✨</p>
     </div>
 
     <!-- Countdown -->
@@ -966,14 +1055,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       </div>
     </div>
 
-    <!-- Tages-Karten -->
-    <div id="day-cards">
+    <!-- Spiel-Kacheln -->
+    <div id="game-tiles">
       <!-- filled by JS -->
     </div>
 
-    <p class="text-center dim" style="font-size:12px; padding: 0 16px 16px;">
-      Jeden Tag warten neue Rätsel auf dich ✨
-    </p>
   </div>
 
   <!-- ═══════════════════════════════════════════
@@ -1133,24 +1219,20 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 const STORAGE_KEY = 'ibiza-adventure-2026';
 const FLIGHT_DATE = new Date('2026-05-10T04:50:00');
 
-const DAYS_CONFIG = [
-  { id: 'tuesday',   date: '2026-05-06', label: 'Di 6.5.',  games: ['kamera', 'condor'],  special: false },
-  { id: 'wednesday', date: '2026-05-07', label: 'Mi 7.5.',  games: ['koffer', 'pinien'],  special: false },
-  { id: 'thursday',  date: '2026-05-08', label: 'Do 8.5.',  games: ['felsen', 'krabbe'],  special: false },
-  { id: 'friday',    date: '2026-05-09', label: 'Fr 9.5.',  games: ['salz',   'insel'],   special: false },
-  { id: 'saturday',  date: '2026-05-10', label: 'Sa 10.5.', games: ['special'],           special: true  }
-];
-
+// Jedes Spiel hat eine eigene Freischaltzeit (alle 12h)
 const GAMES = {
-  kamera: { num: 1, emoji: '📸', word: 'KAMERA', letterIndex: 1, letter: 'A', balePos: 2 },
-  condor: { num: 2, emoji: '🦅', word: 'CONDOR', letterIndex: 5, letter: 'R', balePos: 6 },
-  koffer: { num: 3, emoji: '🧳', word: 'KOFFER', letterIndex: 4, letter: 'E', balePos: 4 },
-  pinien: { num: 4, emoji: '🌲', word: 'PINIEN', letterIndex: 5, letter: 'N', balePos: 8 },
-  felsen: { num: 5, emoji: '🪨', word: 'FELSEN', letterIndex: 4, letter: 'E', balePos: 7 },
-  krabbe: { num: 6, emoji: '🦀', word: 'KRABBE', letterIndex: 3, letter: 'B', balePos: 1 },
-  salz:   { num: 7, emoji: '🧂', word: 'SALZ',   letterIndex: 1, letter: 'A', balePos: 5 },
-  insel:  { num: 8, emoji: '🏝️', word: 'INSEL',  letterIndex: 4, letter: 'L', balePos: 3 }
+  kamera: { num: 1, emoji: '📸', word: 'KAMERA', letterIndex: 1, letter: 'A', balePos: 2, unlockAt: new Date('2026-05-06T00:00:00'), dayLabel: 'Di, 06.05.' },
+  condor: { num: 2, emoji: '🦅', word: 'CONDOR', letterIndex: 5, letter: 'R', balePos: 6, unlockAt: new Date('2026-05-06T12:00:00'), dayLabel: 'Di, 06.05.' },
+  koffer: { num: 3, emoji: '🧳', word: 'KOFFER', letterIndex: 4, letter: 'E', balePos: 4, unlockAt: new Date('2026-05-07T00:00:00'), dayLabel: 'Mi, 07.05.' },
+  pinien: { num: 4, emoji: '🌲', word: 'PINIEN', letterIndex: 5, letter: 'N', balePos: 8, unlockAt: new Date('2026-05-07T12:00:00'), dayLabel: 'Mi, 07.05.' },
+  felsen: { num: 5, emoji: '🪨', word: 'FELSEN', letterIndex: 4, letter: 'E', balePos: 7, unlockAt: new Date('2026-05-08T00:00:00'), dayLabel: 'Do, 08.05.' },
+  krabbe: { num: 6, emoji: '🦀', word: 'KRABBE', letterIndex: 3, letter: 'B', balePos: 1, unlockAt: new Date('2026-05-08T12:00:00'), dayLabel: 'Do, 08.05.' },
+  salz:   { num: 7, emoji: '🧂', word: 'SALZ',   letterIndex: 1, letter: 'A', balePos: 5, unlockAt: new Date('2026-05-09T00:00:00'), dayLabel: 'Fr, 09.05.' },
+  insel:  { num: 8, emoji: '🏝️', word: 'INSEL',  letterIndex: 4, letter: 'L', balePos: 3, unlockAt: new Date('2026-05-09T12:00:00'), dayLabel: 'Fr, 09.05.' }
 };
+
+const GAMES_ORDER = ['kamera','condor','koffer','pinien','felsen','krabbe','salz','insel'];
+const SPECIAL_UNLOCK = new Date('2026-05-10T00:00:00');
 
 // Reihenfolge der Emojis in der Sammelleiste (Spielreihenfolge Di→Fr)
 const EMOJI_ORDER = ['📸','🦅','🧳','🌲','🪨','🦀','🧂','🏝️'];
@@ -1216,6 +1298,8 @@ function loadState() {
 }
 
 function saveState(state) {
+  // Im Debug-Modus nicht speichern — verhindert, dass Testdaten die echte Ansicht beeinflussen
+  if (DEBUG_MODE) return;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
@@ -1229,11 +1313,21 @@ if (urlParams.has('reset')) {
 }
 
 // ─── HILFSFUNKTIONEN ─────────────────────────────────────────────
-function isDayUnlocked(dateStr) {
+function isGameUnlocked(gameId) {
   if (DEBUG_MODE) return true;
-  const now = new Date();
-  const day = new Date(dateStr + 'T00:00:00');
-  return now >= day;
+  if (gameId === 'special') return new Date() >= SPECIAL_UNLOCK;
+  return new Date() >= GAMES[gameId].unlockAt;
+}
+
+function formatTileCountdown(ms) {
+  if (ms <= 0) return null;
+  const totalMin = Math.ceil(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0 && m > 0) return `in ${h}h ${m}m`;
+  if (h > 0)           return `in ${h}h`;
+  if (m > 0)           return `in ${m}m`;
+  return 'gleich';
 }
 
 function pad2(n) { return String(n).padStart(2, '0'); }
@@ -1266,21 +1360,33 @@ function showScreen(id, back = false) {
 
 // ─── COUNTDOWN ────────────────────────────────────────────────────
 function tickCountdown() {
-  const now = new Date();
+  const now  = new Date();
   const diff = FLIGHT_DATE - now;
-  const c = formatCountdown(diff);
-  const el = (id) => document.getElementById(id);
-  el('cd-days').textContent  = c.days;
-  el('cd-hours').textContent = c.hours;
-  el('cd-mins').textContent  = c.mins;
-  el('cd-secs').textContent  = c.secs;
+  const c    = formatCountdown(diff);
+  const el   = (id) => document.getElementById(id);
+  if (el('cd-days'))  el('cd-days').textContent  = c.days;
+  if (el('cd-hours')) el('cd-hours').textContent = c.hours;
+  if (el('cd-mins'))  el('cd-mins').textContent  = c.mins;
+  if (el('cd-secs'))  el('cd-secs').textContent  = c.secs;
 
   // Samstag-Special Finalcountdown
-  const satFinal = document.getElementById('sat-final-countdown');
-  if (satFinal) {
-    const d = formatCountdown(diff);
-    satFinal.textContent = `${d.days}T ${d.hours}:${d.mins}:${d.secs}`;
-  }
+  const satFinal = el('sat-final-countdown');
+  if (satFinal) satFinal.textContent = `${c.days}T ${c.hours}:${c.mins}:${c.secs}`;
+
+  // Kachel-Countdowns live aktualisieren
+  let anyJustUnlocked = false;
+  document.querySelectorAll('[data-unlock-ms]').forEach(span => {
+    const unlockAt = Number(span.dataset.unlockMs);
+    const remaining = unlockAt - now.getTime();
+    const txt = formatTileCountdown(remaining);
+    if (txt) {
+      span.textContent = txt;
+    } else if (span.textContent !== '') {
+      // Eben freigeschaltet → Tiles neu rendern
+      anyJustUnlocked = true;
+    }
+  });
+  if (anyJustUnlocked) renderGameTiles();
 }
 
 // ─── EMOJI-SAMMELLEISTE ──────────────────────────────────────────
@@ -1303,85 +1409,82 @@ function renderEmojiBar(animate = false) {
   });
 }
 
-// ─── TAGES-KARTEN RENDERN ─────────────────────────────────────────
-function getDayEmojis(dayConf) {
-  return dayConf.games
-    .filter(g => g !== 'special')
-    .map(g => GAMES[g].emoji)
-    .join(' ');
-}
-
-function getDayProgress(dayConf, state) {
-  if (dayConf.special) {
-    return state.completedGames.includes('special') ? '✅' : '';
-  }
-  const done = dayConf.games.filter(g => state.completedGames.includes(g)).length;
-  return `${done} / ${dayConf.games.length}`;
-}
-
-function renderDayCards() {
-  const state  = loadState();
-  const grid   = document.getElementById('day-cards');
+// ─── SPIEL-KACHELN RENDERN ───────────────────────────────────────
+function renderGameTiles() {
+  const state = loadState();
+  const grid  = document.getElementById('game-tiles');
   grid.innerHTML = '';
 
-  DAYS_CONFIG.forEach(day => {
-    const unlocked = isDayUnlocked(day.date);
-    const allDone  = day.special
-      ? state.completedGames.includes('special')
-      : day.games.every(g => state.completedGames.includes(g));
+  // Die 8 regulären Spiele
+  GAMES_ORDER.forEach(gameId => {
+    const game    = GAMES[gameId];
+    const unlocked = isGameUnlocked(gameId);
+    const done     = state.completedGames.includes(gameId);
+    const now      = Date.now();
+    const msLeft   = game.unlockAt.getTime() - now;
 
-    const card = document.createElement('div');
-    card.className = 'day-card';
-    if (day.special) card.classList.add('saturday');
+    const tile = document.createElement('div');
+    tile.className = 'game-tile';
 
     if (!unlocked) {
-      card.classList.add('locked');
-    } else if (allDone) {
-      card.classList.add('completed');
-    } else {
-      card.classList.add('available');
-    }
-
-    if (day.special) {
-      const icon = unlocked ? (allDone ? '⭐' : '🌟') : '🔒';
-      card.innerHTML = `
-        <div class="day-card-date">${day.label}</div>
-        <div class="day-card-icon">${icon}</div>
-        <div class="day-card-label">SPECIAL</div>
-        <div class="day-card-progress" style="color:var(--gold)">${allDone ? '✅ Enthüllt' : (unlocked ? 'Bereit!' : 'Gesperrt')}</div>
+      tile.classList.add('locked');
+      tile.innerHTML = `
+        <div class="tile-num">${game.dayLabel}</div>
+        <div class="tile-icon">🔒</div>
+        <div class="tile-label">Rätsel ${game.num}</div>
+        <span class="tile-countdown" data-unlock-ms="${game.unlockAt.getTime()}">${formatTileCountdown(msLeft) || ''}</span>
       `;
-    } else {
-      const icon = !unlocked ? '🔒' : (allDone ? '✅' : '🎮');
-      const progress = getDayProgress(day, state);
-      card.innerHTML = `
-        <div class="day-card-date">${day.label}</div>
-        <div class="day-card-icon">${icon}</div>
-        <div class="day-card-progress">${unlocked ? progress : ''}</div>
+    } else if (done) {
+      tile.classList.add('completed');
+      tile.innerHTML = `
+        <div class="tile-num">${game.dayLabel}</div>
+        <div class="tile-icon">✅</div>
+        <div class="tile-label">Rätsel ${game.num}</div>
+        <div class="tile-sub">Gelöst · Wiederholen?</div>
       `;
+      tile.addEventListener('click', () => openGamePoem(gameId));
+      tile.addEventListener('touchstart', () => {}, { passive: true });
+    } else {
+      tile.classList.add('available');
+      tile.innerHTML = `
+        <div class="tile-num">${game.dayLabel}</div>
+        <div class="tile-icon">▶</div>
+        <div class="tile-label">Rätsel ${game.num}</div>
+        <div class="tile-sub" style="color:var(--gold); font-weight:700;">Spielen!</div>
+      `;
+      tile.addEventListener('click', () => openGamePoem(gameId));
+      tile.addEventListener('touchstart', () => {}, { passive: true });
     }
-
-    if (unlocked) {
-      card.addEventListener('click', () => openDayCard(day));
-      card.addEventListener('touchstart', () => {}, { passive: true });
-    }
-    grid.appendChild(card);
+    grid.appendChild(tile);
   });
-}
 
-function openDayCard(day) {
-  if (day.special) {
-    startSaturdaySpecial();
-    return;
-  }
-  // Zeige welche Spiele heute noch offen sind
-  const state = loadState();
-  const nextGame = day.games.find(g => !state.completedGames.includes(g));
-  if (nextGame) {
-    openGamePoem(nextGame);
+  // Saturday Special — volle Breite
+  const satUnlocked = isGameUnlocked('special');
+  const satDone     = state.completedGames.includes('special');
+  const satMsLeft   = SPECIAL_UNLOCK.getTime() - Date.now();
+
+  const satTile = document.createElement('div');
+  satTile.className = 'game-tile saturday-tile';
+  if (!satUnlocked) satTile.classList.add('locked');
+  else if (satDone)  satTile.classList.add('completed');
+  else               satTile.classList.add('available');
+
+  if (!satUnlocked) {
+    satTile.innerHTML = `
+      <div class="tile-icon">🔒</div>
+      <div class="tile-label">Sa, 10.05. · Großes Finale</div>
+      <span class="tile-countdown" data-unlock-ms="${SPECIAL_UNLOCK.getTime()}">${formatTileCountdown(satMsLeft) || ''}</span>
+    `;
   } else {
-    // Alle gemacht — erstes Spiel nochmal spielen (Wiederholen)
-    openGamePoem(day.games[0]);
+    satTile.innerHTML = `
+      <div class="tile-icon">${satDone ? '⭐' : '🌟'}</div>
+      <div class="tile-label">Sa, 10.05. · Großes Finale</div>
+      <div class="tile-sub" style="color:var(--gold); font-weight:700;">${satDone ? 'Enthüllt!' : 'Jetzt enthüllen!'}</div>
+    `;
+    satTile.addEventListener('click', startSaturdaySpecial);
+    satTile.addEventListener('touchstart', () => {}, { passive: true });
   }
+  grid.appendChild(satTile);
 }
 
 // ─── GEDICHT-INTRO ────────────────────────────────────────────────
@@ -1498,8 +1601,7 @@ function launchConfetti() {
 // ─── HAUPTSCREEN REFRESH ──────────────────────────────────────────
 function refreshMainScreen() {
   renderEmojiBar();
-  renderDayCards();
-  // Remove stale hint before rechecking
+  renderGameTiles();
   const old = document.getElementById('all-done-hint');
   if (old) old.remove();
   checkAllDoneHint();
@@ -2442,12 +2544,28 @@ function satRunAcrostic() {
 
 // ─── INIT ─────────────────────────────────────────────────────────
 (function init() {
-  // iOS Safari: prevent elastic overscroll ruining the gradient background
   document.body.addEventListener('touchmove', (e) => {
     if (e.target === document.body || e.target === document.getElementById('app')) {
       e.preventDefault();
     }
   }, { passive: false });
+
+  // Floating background particles
+  const colors = ['rgba(6,182,212,0.5)','rgba(245,158,11,0.4)','rgba(255,255,255,0.3)','rgba(139,92,246,0.4)'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 4 + Math.random() * 10;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}vw;
+      bottom:${-10 - Math.random()*10}vh;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${12 + Math.random()*16}s;
+      animation-delay:${Math.random()*14}s;
+    `;
+    document.body.appendChild(p);
+  }
 
   refreshMainScreen();
   tickCountdown();
@@ -2466,21 +2584,18 @@ function satRunAcrostic() {
 })();
 
 function checkAllDoneHint() {
-  const state = loadState();
-  const allWeekGames = ['kamera','condor','koffer','pinien','felsen','krabbe','salz','insel'];
-  const allDone = allWeekGames.every(g => state.completedGames.includes(g));
+  const state   = loadState();
+  const allDone = GAMES_ORDER.every(g => state.completedGames.includes(g));
   if (!allDone) return;
-  if (isDayUnlocked('2026-05-10')) return; // Samstag bereits offen
+  if (isGameUnlocked('special')) return;
 
-  // Zeige kleinen Hinweis unter den Karten
   const existing = document.getElementById('all-done-hint');
   if (existing) return;
   const hint = document.createElement('p');
   hint.id = 'all-done-hint';
-  hint.className = 'text-center';
-  hint.style.cssText = 'font-size:13px; color:var(--gold); padding:0 16px 16px; font-style:italic;';
+  hint.style.cssText = 'text-align:center; font-size:13px; color:var(--gold); padding:0 0 16px; font-style:italic;';
   hint.textContent = '🌟 Du hast alle Rätsel gelöst! Am Samstag wartet die große Enthüllung...';
-  document.getElementById('day-cards').after(hint);
+  document.getElementById('game-tiles').after(hint);
 }
 </script>
 </body>
