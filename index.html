@@ -1313,7 +1313,10 @@ const POEMS = {
 };
 
 // ─── STATE ───────────────────────────────────────────────────────
+let _debugState = null; // In-Memory-State für Debug-Modus
+
 function loadState() {
+  if (DEBUG_MODE && _debugState) return JSON.parse(JSON.stringify(_debugState));
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -1322,8 +1325,11 @@ function loadState() {
 }
 
 function saveState(state) {
-  // Im Debug-Modus nicht speichern — verhindert, dass Testdaten die echte Ansicht beeinflussen
-  if (DEBUG_MODE) return;
+  if (DEBUG_MODE) {
+    // Im Debug-Modus nur im Speicher halten — kein localStorage
+    _debugState = JSON.parse(JSON.stringify(state));
+    return;
+  }
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
