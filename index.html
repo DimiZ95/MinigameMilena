@@ -1187,7 +1187,7 @@ body::before {
           </div>
           <div class="flight-card-row">
             <span class="flight-card-icon">🕐</span>
-            <span class="flight-card-text">10.05.2026, 04:50 Uhr</span>
+            <span class="flight-card-text">09.05.2026, 04:50 Uhr</span>
           </div>
           <div class="flight-card-row">
             <span class="flight-card-icon">🏨</span>
@@ -1217,22 +1217,22 @@ body::before {
 
 // ─── KONFIGURATION ───────────────────────────────────────────────
 const STORAGE_KEY = 'ibiza-adventure-2026';
-const FLIGHT_DATE = new Date('2026-05-10T04:50:00');
+const FLIGHT_DATE = new Date('2026-05-09T04:50:00');
 
-// Jedes Spiel hat eine eigene Freischaltzeit (alle 12h)
+// Jedes Spiel hat eine eigene Freischaltzeit
 const GAMES = {
-  kamera: { num: 1, emoji: '📸', word: 'KAMERA', letterIndex: 1, letter: 'A', balePos: 2, unlockAt: new Date('2026-05-06T00:00:00'), dayLabel: 'Di, 06.05.' },
-  condor: { num: 2, emoji: '🦅', word: 'CONDOR', letterIndex: 5, letter: 'R', balePos: 6, unlockAt: new Date('2026-05-06T12:00:00'), dayLabel: 'Di, 06.05.' },
-  koffer: { num: 3, emoji: '🧳', word: 'KOFFER', letterIndex: 4, letter: 'E', balePos: 4, unlockAt: new Date('2026-05-07T00:00:00'), dayLabel: 'Mi, 07.05.' },
-  pinien: { num: 4, emoji: '🌲', word: 'PINIEN', letterIndex: 5, letter: 'N', balePos: 8, unlockAt: new Date('2026-05-07T12:00:00'), dayLabel: 'Mi, 07.05.' },
-  felsen: { num: 5, emoji: '🪨', word: 'FELSEN', letterIndex: 4, letter: 'E', balePos: 7, unlockAt: new Date('2026-05-08T00:00:00'), dayLabel: 'Do, 08.05.' },
-  krabbe: { num: 6, emoji: '🦀', word: 'KRABBE', letterIndex: 3, letter: 'B', balePos: 1, unlockAt: new Date('2026-05-08T12:00:00'), dayLabel: 'Do, 08.05.' },
-  salz:   { num: 7, emoji: '🧂', word: 'SALZ',   letterIndex: 1, letter: 'A', balePos: 5, unlockAt: new Date('2026-05-09T00:00:00'), dayLabel: 'Fr, 09.05.' },
-  insel:  { num: 8, emoji: '🏝️', word: 'INSEL',  letterIndex: 4, letter: 'L', balePos: 3, unlockAt: new Date('2026-05-09T12:00:00'), dayLabel: 'Fr, 09.05.' }
+  kamera: { num: 1, emoji: '📸', word: 'KAMERA', letterIndex: 1, letter: 'A', balePos: 2, unlockAt: new Date('2026-05-05T12:00:00'), dayLabel: 'Di, 05.05.' },
+  condor: { num: 2, emoji: '🦅', word: 'CONDOR', letterIndex: 5, letter: 'R', balePos: 6, unlockAt: new Date('2026-05-05T18:00:00'), dayLabel: 'Di, 05.05.' },
+  koffer: { num: 3, emoji: '🧳', word: 'KOFFER', letterIndex: 4, letter: 'E', balePos: 4, unlockAt: new Date('2026-05-06T00:00:00'), dayLabel: 'Mi, 06.05.' },
+  pinien: { num: 4, emoji: '🌲', word: 'PINIEN', letterIndex: 5, letter: 'N', balePos: 8, unlockAt: new Date('2026-05-06T12:00:00'), dayLabel: 'Mi, 06.05.' },
+  felsen: { num: 5, emoji: '🪨', word: 'FELSEN', letterIndex: 4, letter: 'E', balePos: 7, unlockAt: new Date('2026-05-07T00:00:00'), dayLabel: 'Do, 07.05.' },
+  krabbe: { num: 6, emoji: '🦀', word: 'KRABBE', letterIndex: 3, letter: 'B', balePos: 1, unlockAt: new Date('2026-05-07T12:00:00'), dayLabel: 'Do, 07.05.' },
+  salz:   { num: 7, emoji: '🧂', word: 'SALZ',   letterIndex: 1, letter: 'A', balePos: 5, unlockAt: new Date('2026-05-08T00:00:00'), dayLabel: 'Fr, 08.05.' },
+  insel:  { num: 8, emoji: '🏝️', word: 'INSEL',  letterIndex: 4, letter: 'L', balePos: 3, unlockAt: new Date('2026-05-08T12:00:00'), dayLabel: 'Fr, 08.05.' }
 };
 
 const GAMES_ORDER = ['kamera','condor','koffer','pinien','felsen','krabbe','salz','insel'];
-const SPECIAL_UNLOCK = new Date('2026-05-10T00:00:00');
+const SPECIAL_UNLOCK = new Date('2026-05-09T00:00:00');
 
 // Reihenfolge der Emojis in der Sammelleiste (Spielreihenfolge Di→Fr)
 const EMOJI_ORDER = ['📸','🦅','🧳','🌲','🪨','🦀','🧂','🏝️'];
@@ -1472,13 +1472,13 @@ function renderGameTiles() {
   if (!satUnlocked) {
     satTile.innerHTML = `
       <div class="tile-icon">🔒</div>
-      <div class="tile-label">Sa, 10.05. · Großes Finale</div>
+      <div class="tile-label">Sa, 09.05. · Großes Finale</div>
       <span class="tile-countdown" data-unlock-ms="${SPECIAL_UNLOCK.getTime()}">${formatTileCountdown(satMsLeft) || ''}</span>
     `;
   } else {
     satTile.innerHTML = `
       <div class="tile-icon">${satDone ? '⭐' : '🌟'}</div>
-      <div class="tile-label">Sa, 10.05. · Großes Finale</div>
+      <div class="tile-label">Sa, 09.05. · Großes Finale</div>
       <div class="tile-sub" style="color:var(--gold); font-weight:700;">${satDone ? 'Enthüllt!' : 'Jetzt enthüllen!'}</div>
     `;
     satTile.addEventListener('click', startSaturdaySpecial);
