@@ -1092,6 +1092,9 @@ body::before {
       <div id="poem-text" class="poem-text"></div>
     </div>
     <div id="play-btn-wrap" style="margin-top:20px; display:none;">
+      <div style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); border-radius:14px; padding:10px 14px; margin-bottom:14px; font-size:13px; line-height:1.5; color:rgba(255,255,255,0.85); text-align:center;">
+        🔑 Löse das Rätsel, um einen geheimen Buchstaben zu verdienen. Alle 8 Buchstaben zusammen enthüllen am Samstag das große Geheimnis!
+      </div>
       <button class="btn btn-primary" onclick="startCurrentGame()">Spielen! 🎮</button>
     </div>
   </div>
@@ -1561,10 +1564,11 @@ function onGameWon(gameId) {
     state.collectedEmojis.push(game.emoji);
     saveState(state);
   }
-  showVictoryScreen(game);
+  // State direkt übergeben — kein erneutes loadState() nötig (funktioniert auch im Debug-Modus)
+  showVictoryScreen(game, state);
 }
 
-function showVictoryScreen(game) {
+function showVictoryScreen(game, state) {
   // Lösungswort mit hervorgehobenem Buchstaben
   const wordEl = document.getElementById('victory-word-display');
   wordEl.innerHTML = game.word.split('').map((ch, i) => {
@@ -1578,10 +1582,9 @@ function showVictoryScreen(game) {
   const highlightEl = wordEl.querySelector('.highlight');
   if (highlightEl) {
     const showHint = () => {
-      const state = loadState();
-      const total = EMOJI_ORDER.length;
+      const total     = EMOJI_ORDER.length;
       const collected = state.collectedEmojis.length;
-      hintEl.innerHTML = `💡 Merk dir den Buchstaben <strong style="color:var(--gold)">${game.letter}</strong>! Du hast jetzt ${collected} von ${total} Zeichen — wer alle sammelt, kann am Samstag das große Geheimnis lösen. 🔐`;
+      hintEl.innerHTML = `💡 Merk dir den Buchstaben <strong style="color:var(--gold)">${game.letter}</strong>! Du hast jetzt ${collected} von ${total} Zeichen gesammelt — wer alle ${total} hat, kann am Samstag das große Geheimnis lösen. 🔐`;
       hintEl.classList.add('visible');
     };
     highlightEl.addEventListener('click', showHint);
@@ -1591,8 +1594,7 @@ function showVictoryScreen(game) {
   document.getElementById('victory-emoji-big').textContent = game.emoji;
   document.getElementById('victory-text').textContent = `Dein Zeichen: ${game.emoji}`;
 
-  // Mini-Leiste im Sieg-Screen
-  const state = loadState();
+  // Mini-Leiste im Sieg-Screen — nutzt den bereits aktualisierten State
   const slotsEl = document.getElementById('victory-bar-slots');
   slotsEl.innerHTML = '';
   EMOJI_ORDER.forEach(emoji => {
