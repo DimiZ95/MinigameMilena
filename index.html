@@ -348,7 +348,27 @@ body {
   color: var(--gold);
   text-shadow: 0 0 20px var(--gold);
   animation: letterPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  cursor: pointer;
+  position: relative;
+  text-decoration: underline dotted rgba(245,158,11,0.5);
+  text-underline-offset: 4px;
 }
+
+/* Tipp-Hinweis unter dem Lösungswort */
+#letter-hint {
+  display: none;
+  margin: -8px 0 12px;
+  padding: 10px 14px;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.9);
+  text-align: center;
+  animation: fadeInUp 0.3s ease-out;
+}
+#letter-hint.visible { display: block; }
 @keyframes letterPop {
   0%   { transform: scale(0.5); }
   60%  { transform: scale(1.4); }
@@ -1091,6 +1111,7 @@ body::before {
     <div style="padding: 20px 0;">
       <div class="victory-title">🎉 Gelöst!</div>
       <div id="victory-word-display" class="victory-word"></div>
+      <div id="letter-hint"></div>
       <div id="victory-emoji-big" class="victory-emoji-big"></div>
       <p id="victory-text" class="dim italic text-center mb-16"></p>
       <div id="victory-bar-preview" style="text-align:center; margin: 16px 0 24px;">
@@ -1550,6 +1571,22 @@ function showVictoryScreen(game) {
     const cls = i === game.letterIndex ? 'highlight' : '';
     return `<span class="${cls}">${ch}</span>`;
   }).join('<span style="color:rgba(255,255,255,0.3)"> · </span>');
+
+  // Tipp-Hinweis beim Antippen des goldenen Buchstabens
+  const hintEl = document.getElementById('letter-hint');
+  hintEl.classList.remove('visible');
+  const highlightEl = wordEl.querySelector('.highlight');
+  if (highlightEl) {
+    const showHint = () => {
+      const state = loadState();
+      const total = EMOJI_ORDER.length;
+      const collected = state.collectedEmojis.length;
+      hintEl.innerHTML = `💡 Merk dir den Buchstaben <strong style="color:var(--gold)">${game.letter}</strong>! Du hast jetzt ${collected} von ${total} Zeichen — wer alle sammelt, kann am Samstag das große Geheimnis lösen. 🔐`;
+      hintEl.classList.add('visible');
+    };
+    highlightEl.addEventListener('click', showHint);
+    highlightEl.addEventListener('touchstart', (e) => { e.preventDefault(); showHint(); }, { passive: false });
+  }
 
   document.getElementById('victory-emoji-big').textContent = game.emoji;
   document.getElementById('victory-text').textContent = `Dein Zeichen: ${game.emoji}`;
