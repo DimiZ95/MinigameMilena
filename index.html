@@ -988,6 +988,34 @@ body::before {
   100% { transform: translateY(-100vh) rotate(540deg) scale(0.4); opacity: 0; }
 }
 
+/* === SCHIEBE-PUZZLE === */
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  border-radius: 16px;
+  overflow: hidden;
+  max-width: 300px;
+  margin: 16px auto;
+  aspect-ratio: 1;
+}
+.puzzle-tile {
+  aspect-ratio: 1;
+  background-size: 300% 300%;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  border-radius: 4px;
+}
+.puzzle-tile:active { transform: scale(0.94); }
+.puzzle-empty { background: rgba(0,0,0,0.25) !important; cursor: default; border: 2px dashed rgba(255,255,255,0.2); }
+
 /* Wave strip at bottom */
 #wave-strip {
   position: fixed;
@@ -1121,6 +1149,16 @@ body::before {
         <div class="dim" style="font-size:13px; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Dein Zeichen</div>
         <div id="victory-bar-slots" style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;"></div>
       </div>
+      <div id="photo-teaser" style="display:none; margin: 8px 0 20px; border-radius:18px; overflow:hidden; position:relative; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+        <div id="photo-teaser-inner" style="height:180px; background: linear-gradient(160deg,#0891b2 0%,#0e7490 45%,#f59e0b 100%); position:relative;">
+          <img id="photo-teaser-img" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;">
+        </div>
+        <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%); display:flex; align-items:flex-end; padding:12px 14px;">
+          <p style="color:white; font-size:13px; font-style:italic; margin:0; line-height:1.4;">
+            📸 Erster Hinweis: Erkennst du diese Kulisse?
+          </p>
+        </div>
+      </div>
       <button class="btn btn-primary" id="victory-continue-btn" onclick="afterVictory()">Weiter ✨</button>
     </div>
   </div>
@@ -1241,6 +1279,8 @@ body::before {
 
 // ─── KONFIGURATION ───────────────────────────────────────────────
 const STORAGE_KEY = 'ibiza-adventure-2026';
+// Strandfotos: null = Gradient-Fallback; ersetze durch: 'data:image/jpeg;base64,DEIN_STRING'
+const BEACH_PHOTO = null;
 const FLIGHT_DATE = new Date('2026-05-09T04:50:00');
 
 // Jedes Spiel hat eine eigene Freischaltzeit
@@ -1616,6 +1656,22 @@ function showVictoryScreen(game, state) {
     slotsEl.appendChild(slot);
   });
 
+  // Foto-Teaser nach KAMERA-Sieg
+  const teaser = document.getElementById('photo-teaser');
+  if (teaser) {
+    teaser.style.display = 'none';
+    teaser.style.animation = '';
+  }
+  if (game.id === 'kamera' && teaser) {
+    teaser.style.display = 'block';
+    teaser.style.animation = 'fadeInUp 0.7s ease-out 0.6s both';
+    if (BEACH_PHOTO) {
+      const img = document.getElementById('photo-teaser-img');
+      img.src = BEACH_PHOTO;
+      img.style.display = 'block';
+    }
+  }
+
   showScreen('victory-screen');
   launchConfetti();
 }
@@ -1923,85 +1979,82 @@ function launchKoffer() {
 
 // ─── SPIEL 4: PINIEN — Memory ────────────────────────────────────
 function launchPinien() {
-  const symbols = ['🌲','🌊','☀️','🐚','🌺','🦋'];
-  let cards = [...symbols, ...symbols];
-  // Shuffle
-  for (let i = cards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cards[i], cards[j]] = [cards[j], cards[i]];
+  // background-position für jede der 9 Kacheln (3×3 Raster)
+  const BG_POS = [
+    '0% 0%',   '50% 0%',   '100% 0%',
+    '0% 50%',  '50% 50%',  '100% 50%',
+    '0% 100%', '50% 100%', '100% 100%'
+  ];
+  // Fallback-Farben wenn kein Foto vorhanden
+  const TILE_COLORS = [
+    '#0891b2','#0e7490','#0284c7',
+    '#0369a1','#075985','#0c4a6e',
+    '#164e63','#155e75','#1e3a5f'
+  ];
+
+  let tiles = [0,1,2,3,4,5,6,7,null];
+
+  // Shuffle via gültige Züge → garantiert lösbar
+  function getAdjacentTo(pos) {
+    const adj = [];
+    if (pos >= 3)        adj.push(pos - 3);
+    if (pos < 6)         adj.push(pos + 3);
+    if (pos % 3 !== 0)   adj.push(pos - 1);
+    if (pos % 3 !== 2)   adj.push(pos + 1);
+    return adj;
   }
 
-  let flipped = [];
-  let matched = 0;
-  let locked  = false;
+  let emptyPos = 8;
+  for (let i = 0; i < 200; i++) {
+    const nbrs = getAdjacentTo(emptyPos);
+    const pick = nbrs[Math.floor(Math.random() * nbrs.length)];
+    [tiles[emptyPos], tiles[pick]] = [tiles[pick], tiles[emptyPos]];
+    emptyPos = pick;
+  }
+
+  function isSolved() {
+    return tiles.every((t, i) => i === 8 ? t === null : t === i);
+  }
 
   function render() {
-    document.getElementById('game-content').innerHTML = `
+    const content = document.getElementById('game-content');
+    content.innerHTML = `
       <div class="game-title">Rätsel 4</div>
-      <p class="text-center dim italic mb-8" style="font-size:13px;">Finde alle 6 Paare!</p>
-      <div class="progress-bar-wrap">
-        <div class="progress-bar" id="mem-prog" style="width:0%"></div>
-      </div>
-      <div class="memory-grid" id="memory-grid"></div>
-      <div class="feedback-msg" id="mem-feedback"></div>
+      <p class="text-center dim italic mb-8" style="font-size:13px;">Schiebe die Kacheln in die richtige Reihenfolge!</p>
+      <div class="puzzle-grid" id="puzzle-grid"></div>
+      <div class="feedback-msg" id="puzzle-feedback"></div>
     `;
-    const grid = document.getElementById('memory-grid');
-    cards.forEach((sym, i) => {
-      const card = document.createElement('div');
-      card.className = 'memory-card';
-      card.id = `mc-${i}`;
-      card.dataset.sym = sym;
-      card.innerHTML = `
-        <div class="memory-card-front">❓</div>
-        <div class="memory-card-back">${sym}</div>
-      `;
-      card.onclick = () => memoryFlip(i);
-      card.addEventListener('touchstart', () => {}, { passive: true });
-      grid.appendChild(card);
+    const grid = document.getElementById('puzzle-grid');
+    tiles.forEach((tileVal, pos) => {
+      const el = document.createElement('div');
+      if (tileVal === null) {
+        el.className = 'puzzle-tile puzzle-empty';
+      } else {
+        el.className = 'puzzle-tile';
+        if (BEACH_PHOTO) {
+          el.style.backgroundImage = `url(${BEACH_PHOTO})`;
+          el.style.backgroundPosition = BG_POS[tileVal];
+          el.style.backgroundSize = '300% 300%';
+        } else {
+          el.style.background = TILE_COLORS[tileVal];
+          el.textContent = tileVal + 1;
+        }
+        el.onclick = () => puzzleTap(pos);
+        el.addEventListener('touchstart', () => {}, { passive: true });
+      }
+      grid.appendChild(el);
     });
   }
 
-  window.memoryFlip = function(i) {
-    if (locked) return;
-    const card = document.getElementById(`mc-${i}`);
-    if (!card || card.classList.contains('flipped') || card.classList.contains('matched')) return;
-
-    card.classList.add('flipped');
-    flipped.push(i);
-
-    if (flipped.length === 2) {
-      locked = true;
-      const [a, b] = flipped;
-      const ca = document.getElementById(`mc-${a}`);
-      const cb = document.getElementById(`mc-${b}`);
-      if (ca.dataset.sym === cb.dataset.sym) {
-        // Match!
-        setTimeout(() => {
-          ca.classList.add('matched');
-          cb.classList.add('matched');
-          matched++;
-          document.getElementById('mem-prog').style.width = `${(matched/symbols.length)*100}%`;
-          const fb = document.getElementById('mem-feedback');
-          if (fb) { fb.textContent = 'Paar gefunden! ✓'; fb.className = 'feedback-msg good'; }
-          flipped = [];
-          locked  = false;
-          if (matched === symbols.length) {
-            setTimeout(() => onGameWon('pinien'), 600);
-          } else {
-            setTimeout(() => { if (fb) fb.textContent = ''; }, 800);
-          }
-        }, 400);
-      } else {
-        // Kein Match
-        setTimeout(() => {
-          ca.classList.remove('flipped');
-          cb.classList.remove('flipped');
-          flipped = [];
-          locked  = false;
-          const fb = document.getElementById('mem-feedback');
-          if (fb) { fb.textContent = ''; }
-        }, 1500);
-      }
+  window.puzzleTap = function(pos) {
+    const curEmpty = tiles.indexOf(null);
+    if (!getAdjacentTo(pos).includes(curEmpty)) return;
+    [tiles[curEmpty], tiles[pos]] = [tiles[pos], tiles[curEmpty]];
+    render();
+    if (isSolved()) {
+      const fb = document.getElementById('puzzle-feedback');
+      if (fb) { fb.textContent = 'Perfekt! 🌲'; fb.className = 'feedback-msg good'; }
+      setTimeout(() => onGameWon('pinien'), 700);
     }
   };
 
